@@ -19,12 +19,16 @@ pub async fn check() -> Result<(), Box<dyn Error>> {
     let city_name: Option<&str> = data["city_name"].as_str();
     let lat: Option<f64> = data["lat"].as_f64();
     let lon: Option<f64> = data["lon"].as_f64();
+    let preferred_unit: Option<i64> = data["preferred_unit"].as_i64();
 
-    match (city_name, lat, lon) {
-        (Some(city_name_value), Some(lat_value), Some(lon_value)) => {
-            let url = format!(
-                "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units=imperial"
-            );
+    match (city_name, lat, lon, preferred_unit) {
+        (Some(city_name_value), Some(lat_value), Some(lon_value), Some(preferred_unit_value)) => {
+            let url = match preferred_unit_value {
+                1 => format!("https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units=metric"),
+                2 => format!("https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units=imperial"),
+                _ => unreachable!(),
+            };
+
             let resp = reqwest::get(url).await?.text().await?;
             let data: Value = serde_json::from_str(&resp)?;
 
@@ -35,8 +39,14 @@ pub async fn check() -> Result<(), Box<dyn Error>> {
 
             let temp = format!("{}", &data["main"]["temp"]).replace('"', "");
 
+            let unit_symbol = match preferred_unit_value {
+                1 => "℃",
+                2 => "℉",
+                _ => unreachable!(),
+            };
+
             println!("{}", city_name_value);
-            println!("{} / {} ({})", temp, weather.0, weather.1);
+            println!("{}{} / {} ({})", temp, unit_symbol, weather.0, weather.1);
         }
         _ => {
             return Err("\"settings.json\" is not valid.".into());
