@@ -65,7 +65,7 @@ impl<'a> fmt::Display for City<'a> {
 }
 
 fn show_cities(city_vec: &[City]) {
-    println!("City list:");
+    println!("\nCity list:");
     for (index, city) in city_vec.iter().enumerate() {
         println!("{}) {}", index + 1, city);
     }
@@ -149,7 +149,7 @@ pub async fn search_city(query: &String) -> Result<(), Box<dyn Error>> {
 
     match city_select(&city_vec) {
         Ok((city_name, unit_name)) => {
-            println!("{} is now your city!", city_name);
+            println!("\n{} is now your city!", city_name);
             println!("We'll use {} for you.", unit_name);
         }
         Err(e) => {
