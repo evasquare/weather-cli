@@ -1,0 +1,19 @@
+[package]
+name = "weather-cli"
+description = "Weather for command-line fans!"
+keywords = ["weather", "open-weather-api"]
+version = "0.1.0"
+authors = ["decaplanet"]
+license-file = "LICENSE.txt"
+repository = "https://github.com/decaplanet/weather-cli"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.3.3", features = ["derive"] }
+tokio = { version = "1.28.2", features = ["full"] }
+dotenv = "0.15.0"
+reqwest = "0.11.18"
+regex = "1.8.4"
+serde_json = "1.0.97"
