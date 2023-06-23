@@ -41,5 +41,5 @@ We'll use Fahrenheit for you.
 ```
 $ weather-cli check                          
 San Jose
-57.69 / Clouds (overcast clouds)
+57.61℉ / Clouds (overcast clouds)
 ```
