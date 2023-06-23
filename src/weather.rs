@@ -1,25 +1,31 @@
 use regex::Regex;
 use serde_json::Value;
 use std::{
-    env,
     error::Error,
     fmt,
     fs::File,
     io::{self, Read, Write},
 };
+use weather_cli::{get_executable_directory, get_json_file};
 
 pub async fn check() -> Result<(), Box<dyn Error>> {
-    let api_key = env::var("API_KEY").unwrap();
+    // Get the API key from "api.json".
+    let mut api_json_file = get_json_file("api")?;
+    let mut api_json_string = String::new();
+    api_json_file.read_to_string(&mut api_json_string)?;
+    let api_key_data: Value = serde_json::from_str(&api_json_string)?;
+    let api_key = api_key_data["key"].as_str().unwrap();
 
-    let mut file = File::open("settings.json")?;
-    let mut json_string = String::new();
-    file.read_to_string(&mut json_string)?;
-    let data: Value = serde_json::from_str(&json_string)?;
+    // Get properties from "setting.json".
+    let mut setting_json_file = get_json_file("settings")?;
+    let mut setting_json_string = String::new();
+    setting_json_file.read_to_string(&mut setting_json_string)?;
+    let setting_data: Value = serde_json::from_str(&setting_json_string)?;
 
-    let city_name: Option<&str> = data["city_name"].as_str();
-    let lat: Option<f64> = data["lat"].as_f64();
-    let lon: Option<f64> = data["lon"].as_f64();
-    let preferred_unit: Option<i64> = data["preferred_unit"].as_i64();
+    let city_name: Option<&str> = setting_data["city_name"].as_str();
+    let lat: Option<f64> = setting_data["lat"].as_f64();
+    let lon: Option<f64> = setting_data["lon"].as_f64();
+    let preferred_unit: Option<i64> = setting_data["preferred_unit"].as_i64();
 
     match (city_name, lat, lon, preferred_unit) {
         (Some(city_name_value), Some(lat_value), Some(lon_value), Some(preferred_unit_value)) => {
@@ -36,7 +42,6 @@ pub async fn check() -> Result<(), Box<dyn Error>> {
                 format!("{}", &data["weather"][0]["main"]).replace('"', ""),
                 format!("{}", &data["weather"][0]["description"]).replace('"', ""),
             );
-
             let temp = format!("{}", &data["main"]["temp"]).replace('"', "");
 
             let unit_symbol = match preferred_unit_value {
@@ -110,16 +115,7 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
 
     let city = &city_vec[selected_city - 1];
 
-    let mut file = match File::open("settings.json") {
-        Ok(f) => f,
-        Err(_) => {
-            let mut new_file = File::create("settings.json")?;
-            new_file.write_all("{}".as_bytes())?;
-
-            File::open("settings.json")?
-        }
-    };
-
+    let mut file = get_json_file("settings")?;
     let mut json_string = String::new();
     file.read_to_string(&mut json_string)?;
 
@@ -129,9 +125,10 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
     data["lat"] = city.lat.into();
     data["lon"] = city.lon.into();
     data["preferred_unit"] = selected_unit.into();
-
     let json_string = &data.to_string();
-    File::create("settings.json")
+
+    let executable_dir = get_executable_directory()?;
+    File::create(format!("{}/settings.json", executable_dir))
         .unwrap()
         .write_all(json_string.as_bytes())?;
 
@@ -139,7 +136,12 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
 }
 
 pub async fn search_city(query: &String) -> Result<(), Box<dyn Error>> {
-    let api_key = env::var("API_KEY").unwrap();
+    let mut api_json_file = get_json_file("api")?;
+    let mut api_json_string = String::new();
+    api_json_file.read_to_string(&mut api_json_string)?;
+    let api_key_data: Value = serde_json::from_str(&api_json_string)?;
+    let api_key = api_key_data["key"].as_str().unwrap();
+
     let url =
         format!("http://api.openweathermap.org/geo/1.0/direct?q={query}&limit=10&appid={api_key}");
     let resp = reqwest::get(url).await?.text().await?;
@@ -176,14 +178,26 @@ pub async fn search_city(query: &String) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn api_setup(key: String) -> Result<(), Box<dyn Error>> {
+    let executable_dir = get_executable_directory()?;
+
     let regex = Regex::new(r"^[a-zA-Z0-9]+$").unwrap();
 
     if (key.len() < 32 && key.len() > 32) || !regex.is_match(&key) {
         println!("Please enter a valid key!");
     } else {
-        let data = format!("API_KEY={}", key);
-        let mut env = File::create(".env")?;
-        env.write_all(data.as_bytes())?;
+        let mut api_json_file = get_json_file("api")?;
+        let mut api_json_string = String::new();
+        api_json_file.read_to_string(&mut api_json_string)?;
+        let mut api_json_data: Value = serde_json::from_str(&api_json_string)?;
+
+        api_json_data["key"] = key.into();
+
+        let api_json_string = &api_json_data.to_string();
+
+        File::create(format!("{}/api.json", executable_dir))
+            .unwrap()
+            .write_all(api_json_string.as_bytes())?;
+
         println!("Successfully updated your key!");
     }
 
