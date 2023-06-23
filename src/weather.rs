@@ -8,16 +8,20 @@ use std::{
 };
 use weather_cli::{get_executable_directory, get_json_file};
 
+const API_JSON_NAME: &str = "api";
+const SETTINGS_JSON_NAME: &str = "settings";
+const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
+
 pub async fn check() -> Result<(), Box<dyn Error>> {
     // Get the API key from "api.json".
-    let mut api_json_file = get_json_file("api")?;
+    let mut api_json_file = get_json_file(API_JSON_NAME)?;
     let mut api_json_string = String::new();
     api_json_file.read_to_string(&mut api_json_string)?;
     let api_key_data: Value = serde_json::from_str(&api_json_string)?;
     let api_key = api_key_data["key"].as_str().unwrap();
 
     // Get properties from "setting.json".
-    let mut setting_json_file = get_json_file("settings")?;
+    let mut setting_json_file = get_json_file(SETTINGS_JSON_NAME)?;
     let mut setting_json_string = String::new();
     setting_json_file.read_to_string(&mut setting_json_string)?;
     let setting_data: Value = serde_json::from_str(&setting_json_string)?;
@@ -30,8 +34,16 @@ pub async fn check() -> Result<(), Box<dyn Error>> {
     match (city_name, lat, lon, preferred_unit) {
         (Some(city_name_value), Some(lat_value), Some(lon_value), Some(preferred_unit_value)) => {
             let url = match preferred_unit_value {
-                1 => format!("https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units=metric"),
-                2 => format!("https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units=imperial"),
+                1 => API_URL
+                    .replace("{lat_value}", lat_value.to_string().as_str())
+                    .replace("{lon_value}", lon_value.to_string().as_str())
+                    .replace("{api_key}", api_key)
+                    .replace("{unit}", "metric"),
+                2 => API_URL
+                    .replace("{lat_value}", lat_value.to_string().as_str())
+                    .replace("{lon_value}", lon_value.to_string().as_str())
+                    .replace("{api_key}", api_key)
+                    .replace("{unit}", "imperial"),
                 _ => unreachable!(),
             };
 
@@ -115,7 +127,7 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
 
     let city = &city_vec[selected_city - 1];
 
-    let mut file = get_json_file("settings")?;
+    let mut file = get_json_file(SETTINGS_JSON_NAME)?;
     let mut json_string = String::new();
     file.read_to_string(&mut json_string)?;
 
@@ -128,7 +140,7 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
     let json_string = &data.to_string();
 
     let executable_dir = get_executable_directory()?;
-    File::create(format!("{}/settings.json", executable_dir))
+    File::create(format!("{}/{}.json", executable_dir, SETTINGS_JSON_NAME))
         .unwrap()
         .write_all(json_string.as_bytes())?;
 
@@ -136,7 +148,7 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
 }
 
 pub async fn search_city(query: &String) -> Result<(), Box<dyn Error>> {
-    let mut api_json_file = get_json_file("api")?;
+    let mut api_json_file = get_json_file(API_JSON_NAME)?;
     let mut api_json_string = String::new();
     api_json_file.read_to_string(&mut api_json_string)?;
     let api_key_data: Value = serde_json::from_str(&api_json_string)?;
@@ -185,7 +197,7 @@ pub fn api_setup(key: String) -> Result<(), Box<dyn Error>> {
     if (key.len() < 32 && key.len() > 32) || !regex.is_match(&key) {
         println!("Please enter a valid key!");
     } else {
-        let mut api_json_file = get_json_file("api")?;
+        let mut api_json_file = get_json_file(API_JSON_NAME)?;
         let mut api_json_string = String::new();
         api_json_file.read_to_string(&mut api_json_string)?;
         let mut api_json_data: Value = serde_json::from_str(&api_json_string)?;
@@ -194,7 +206,7 @@ pub fn api_setup(key: String) -> Result<(), Box<dyn Error>> {
 
         let api_json_string = &api_json_data.to_string();
 
-        File::create(format!("{}/api.json", executable_dir))
+        File::create(format!("{}/{}.json", executable_dir, API_JSON_NAME))
             .unwrap()
             .write_all(api_json_string.as_bytes())?;
 
