@@ -16,5 +16,6 @@ Cargo.lock
 # Etc.
 .vscode
 .env
-settings.json
 .DS_Store
+api.json
+settings.json
