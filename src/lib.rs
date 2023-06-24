@@ -2,6 +2,16 @@ use std::{env, error::Error, fs::File, io::Write};
 pub mod cmd_line;
 pub mod weather;
 
+/// Constants for the information of the program.
+pub mod program_info {
+    /// The name of the program.
+    pub const PROGRAM_NAME: &str = "weather-cli";
+    /// The description of the program.
+    pub const PROGRAM_DESCRIPTION: &str = "Weather for command-line fans!";
+    /// The authors of the program.
+    pub const PROGRAM_AUTHORS: &str = "decaplanet";
+}
+
 /// Returns the running executable directory.
 pub fn get_executable_directory() -> Result<String, Box<dyn Error>> {
     let executable_path = env::current_exe()?;

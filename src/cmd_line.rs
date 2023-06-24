@@ -1,5 +1,6 @@
 use crate::{
     get_executable_directory,
+    program_info::{PROGRAM_AUTHORS, PROGRAM_DESCRIPTION, PROGRAM_NAME},
     weather::{api_setup, check, search_city},
 };
 use clap::{Parser, Subcommand};
@@ -62,24 +63,19 @@ pub async fn init() {
             api_setup(key.to_string()).unwrap();
         }
         Some(Commands::About {}) => {
-            let name = std::env::var("CARGO_PKG_NAME").unwrap();
-            let description = std::env::var("CARGO_PKG_DESCRIPTION").unwrap();
-            let version = std::env::var("CARGO_PKG_VERSION").unwrap();
-            let authors = std::env::var("CARGO_PKG_AUTHORS").unwrap();
-
-            let splited_author_list: Vec<&str> = authors.split(':').collect();
+            let splited_author_list: Vec<&str> = PROGRAM_AUTHORS.split(',').collect();
 
             let mut authors = String::new();
             for (index, one) in splited_author_list.into_iter().enumerate() {
                 if index == 0 {
-                    authors += one;
+                    authors += one.trim();
                 } else {
-                    authors = authors + ", " + one;
+                    authors = authors + ", " + one.trim();
                 }
             }
 
-            println!("# {} ({}):", name, version);
-            println!("{}\n", description);
+            println!("# {}:", PROGRAM_NAME);
+            println!("{}\n", PROGRAM_DESCRIPTION);
             println!("Developed by: {}", authors);
         }
         None => {
