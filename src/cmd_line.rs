@@ -50,9 +50,6 @@ pub async fn init() {
                 Ok(()) => {}
                 Err(e) => {
                     println!("ERROR: {}", e);
-                    if e.to_string().contains("No such file or directory") {
-                        println!("ERROR: Try checking if \"settings.json\" exists. If not, you can create one with \"set-location\" command.");
-                    }
                 }
             };
         }
