@@ -4,7 +4,7 @@ description = "Weather for command-line fans!"
 keywords = ["weather", "open-weather-api"]
 version = "0.1.1"
 authors = ["decaplanet"]
-license-file = "LICENSE.txt"
+license = "MIT"
 repository = "https://github.com/decaplanet/weather-cli"
 edition = "2021"
 
