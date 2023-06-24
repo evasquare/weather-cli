@@ -1,6 +1,21 @@
 # weather-cli
 Use simple commands to check the weather in your city. Easily search your city and select it.
 
+<br>
+
+## Setup
+You can install the crate with `cargo install` command.
+```bash
+cargo install weather-cli
+```
+Once installed, create an API key on [OpenWeather](https://openweathermap.org). You can register your key using the `weather-cli api-setup` command.
+
+```bash
+weather-cli api-setup --key "EXAMPLE_KEY"
+```
+
+<br>
+
 ## Commands
 
 | command      | description                            |
@@ -10,6 +25,8 @@ Use simple commands to check the weather in your city. Easily search your city a
 | api-setup    | Setup the OpenWeather API Key          |
 | about        | View information about the program     |
 | help         | View the list of commands              |
+
+<br>
 
 ## Use Examples
 
