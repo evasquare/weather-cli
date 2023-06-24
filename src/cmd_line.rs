@@ -1,6 +1,5 @@
 use crate::weather::{api_setup, check, search_city};
 use clap::{Parser, Subcommand};
-use std::env;
 use weather_cli::get_executable_directory;
 
 const ABOUT: &str = "# weather-cli : Weather for command-line fans!";
