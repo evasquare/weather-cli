@@ -1,6 +1,7 @@
 use crate::weather::{api_setup, check, search_city};
 use clap::{Parser, Subcommand};
 use std::env;
+use weather_cli::get_executable_directory;
 
 const ABOUT: &str = "# weather-cli : Weather for command-line fans!";
 
@@ -82,11 +83,8 @@ pub async fn init() {
         None => {
             println!("Please use \"weather-cli help\" command for help.");
 
-            if let Ok(program_dir) = env::current_dir() {
-                if let Some(dir_str) = program_dir.to_str() {
-                    println!("Program directory: {}", dir_str);
-                }
-            }
+            let executable_directory = get_executable_directory().unwrap();
+            println!("Program Executable Directory: {}", executable_directory);
         }
     }
 }
