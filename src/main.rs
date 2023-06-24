@@ -1,6 +1,5 @@
 use dotenv::dotenv;
-mod cmd_line;
-mod weather;
+use weather_cli::cmd_line;
 
 #[tokio::main]
 async fn main() {

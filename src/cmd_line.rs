@@ -1,6 +1,8 @@
-use crate::weather::{api_setup, check, search_city};
+use crate::{
+    get_executable_directory,
+    weather::{api_setup, check, search_city},
+};
 use clap::{Parser, Subcommand};
-use weather_cli::get_executable_directory;
 
 const ABOUT: &str = "# weather-cli : Weather for command-line fans!";
 
@@ -37,6 +39,7 @@ enum Commands {
     About {},
 }
 
+/// Initialize the command line interface.
 pub async fn init() {
     let cli = Cli::parse();
 

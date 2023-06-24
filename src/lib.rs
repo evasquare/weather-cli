@@ -1,5 +1,8 @@
 use std::{env, error::Error, fs::File, io::Write};
+pub mod cmd_line;
+pub mod weather;
 
+/// Returns the running executable directory.
 pub fn get_executable_directory() -> Result<String, Box<dyn Error>> {
     let executable_path = env::current_exe()?;
     let executable_directory = executable_path.parent().unwrap();
@@ -11,6 +14,7 @@ pub fn get_executable_directory() -> Result<String, Box<dyn Error>> {
     Err("Unable to get the executable directory.".into())
 }
 
+/// Formats the given file name with the executable directory.
 pub fn get_json_file(name: &str) -> Result<File, Box<dyn Error>> {
     let executable_dir = get_executable_directory()?;
 

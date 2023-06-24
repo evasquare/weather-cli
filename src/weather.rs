@@ -1,3 +1,4 @@
+use crate::{get_executable_directory, get_json_file};
 use regex::Regex;
 use serde_json::Value;
 use std::{
@@ -6,12 +7,39 @@ use std::{
     fs::File,
     io::{self, Read, Write},
 };
-use weather_cli::{get_executable_directory, get_json_file};
 
-const API_JSON_NAME: &str = "api";
-const SETTINGS_JSON_NAME: &str = "settings";
-const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
+/// Constants related to the API and settings.
+mod constants {
+    /// The name of the json file for the API key.
+    pub const API_JSON_NAME: &str = "api";
 
+    /// The name of the json file for settings.
+    pub const SETTINGS_JSON_NAME: &str = "settings";
+
+    /// The URL template for the OpenWeatherMap API.
+    ///
+    /// This template can be used to retrieve weather data by replacing the following placeholders:
+    ///
+    /// - `{lat_value}`: Latitude value of the location.
+    /// - `{lon_value}`: Longitude value of the location.
+    /// - `{api_key}`: Your OpenWeatherMap API key.
+    /// - `{unit}`: The desired measurement unit. (ex. `metric` or `imperial`)
+    ///
+    /// ## Example Usage
+    ///
+    /// ```
+    /// let url = API_URL
+    ///     .replace("{lat_value}", "37.3361663")
+    ///     .replace("{lon_value}", "-121.890591")
+    ///     .replace("{api_key}", "EXAMPLE_KEY")
+    ///     .replace("{unit}", "imperial");
+    /// ```
+    pub const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
+}
+
+use self::constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME};
+
+/// Checks the weather information from the API.
 pub async fn check() -> Result<(), Box<dyn Error>> {
     // Get the API key from "api.json".
     let mut api_json_file = get_json_file(API_JSON_NAME)?;
@@ -73,14 +101,41 @@ pub async fn check() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Represents a city with its name, latitude, longitude, and country.
 #[derive(Clone)]
 struct City<'a> {
+    /// The name of the city.
     name: &'a str,
+    /// The latitude coordinate of the city.
     lat: f64,
+    /// The longitude coordinate of the city.
     lon: f64,
+    /// The country where the city is located.
     country: &'a str,
 }
 
+/// Formats properties for the City struct for printing.
+///
+/// ## Example Usage
+///
+/// ```
+/// struct City<'a> {
+///     name: &'a str,
+///     lat: f64,
+///     lon: f64,
+///     country: &'a str,
+/// };
+///
+/// let city = City {
+///     name: "San Jose",
+///     lat: 37.3361663,
+///     lon: -121.890591,
+///     country: "US",
+/// };
+///
+/// println!("{}", city);
+/// // Output: "San Jose, US (lat: 37.3361663, lon: -121.890591)"
+/// ```
 impl<'a> fmt::Display for City<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> fmt::Result {
         let output = format!(
@@ -91,13 +146,15 @@ impl<'a> fmt::Display for City<'a> {
     }
 }
 
-fn show_cities(city_vec: &[City]) {
+/// Prints each cities in the given slice.
+fn show_cities(city_slice: &[City]) {
     println!("\nCity list:");
-    for (index, city) in city_vec.iter().enumerate() {
+    for (index, city) in city_slice.iter().enumerate() {
         println!("{}) {}", index + 1, city);
     }
 }
 
+/// Prompts the user to select a city and preferred unit.
 fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn Error>> {
     let mut selected_city: String = String::new();
     println!("\nPlease select your city.");
@@ -147,6 +204,7 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
     Ok((city.name, selected_unit_name))
 }
 
+/// Retrieves cities with the search query and saves the selected city.
 pub async fn search_city(query: &String) -> Result<(), Box<dyn Error>> {
     let mut api_json_file = get_json_file(API_JSON_NAME)?;
     let mut api_json_string = String::new();
@@ -189,6 +247,7 @@ pub async fn search_city(query: &String) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Saves the given API key for later usage.
 pub fn api_setup(key: String) -> Result<(), Box<dyn Error>> {
     let executable_dir = get_executable_directory()?;
 
