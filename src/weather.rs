@@ -42,14 +42,26 @@ use self::constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME};
 /// Checks the weather information from the API.
 pub async fn check() -> Result<(), Box<dyn Error>> {
     // Get the API key from "api.json".
-    let mut api_json_file = get_json_file(API_JSON_NAME)?;
+    let mut api_json_file = get_json_file(API_JSON_NAME).unwrap_or_else(|err| {
+        eprintln!("ERROR: {}", err);
+        eprintln!("ERROR: Couldn't find \"api-key setting file\". Try setting your api key again.");
+        std::process::exit(1);
+    });
+
     let mut api_json_string = String::new();
     api_json_file.read_to_string(&mut api_json_string)?;
     let api_key_data: Value = serde_json::from_str(&api_json_string)?;
-    let api_key = api_key_data["key"].as_str().unwrap();
+    let api_key = api_key_data["key"].as_str().unwrap_or_else(|| {
+        eprintln!("ERROR: Your api-key setting is invalid. Try setting your api key again.");
+        std::process::exit(1);
+    });
 
     // Get properties from "setting.json".
-    let mut setting_json_file = get_json_file(SETTINGS_JSON_NAME)?;
+    let mut setting_json_file = get_json_file(SETTINGS_JSON_NAME).unwrap_or_else(|err| {
+        eprintln!("ERROR: {}", err);
+        eprintln!("ERROR: Couldn't find \"setting file\". Try setting your city again.");
+        std::process::exit(1);
+    });
     let mut setting_json_string = String::new();
     setting_json_file.read_to_string(&mut setting_json_string)?;
     let setting_data: Value = serde_json::from_str(&setting_json_string)?;
@@ -94,7 +106,9 @@ pub async fn check() -> Result<(), Box<dyn Error>> {
             println!("{}{} / {} ({})", temp, unit_symbol, weather.0, weather.1);
         }
         _ => {
-            return Err("\"settings.json\" is not valid.".into());
+            return Err(
+                "ERROR: Your city setting is not valid. Try setting your city again.".into(),
+            );
         }
     }
 
