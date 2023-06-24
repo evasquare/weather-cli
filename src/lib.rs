@@ -28,13 +28,14 @@ pub fn get_executable_directory() -> Result<String, Box<dyn Error>> {
 pub fn get_json_file(name: &str) -> Result<File, Box<dyn Error>> {
     let executable_dir = get_executable_directory()?;
 
-    let file = match File::open(format!("{}/{}.json", executable_dir, name)) {
+    let file = match File::open(format!("{}/weather-cli-{}.json", executable_dir, name)) {
         Ok(f) => f,
         Err(_) => {
-            let mut new_file = File::create(format!("{}/{}.json", executable_dir, name)).unwrap();
+            let mut new_file =
+                File::create(format!("{}/weather-cli-{}.json", executable_dir, name)).unwrap();
             new_file.write_all("{}".as_bytes()).unwrap();
 
-            File::open(format!("{}/{}.json", executable_dir, name)).unwrap()
+            File::open(format!("{}/weather-cli-{}.json", executable_dir, name)).unwrap()
         }
     };
 
