@@ -52,11 +52,11 @@ pub async fn check() -> Result<(), Box<dyn Error>> {
     api_json_file.read_to_string(&mut api_json_string)?;
     let api_key_data: Value = serde_json::from_str(&api_json_string)?;
     let api_key = api_key_data["key"].as_str().unwrap_or_else(|| {
-        eprintln!("ERROR: Your api-key setting is invalid. Try setting your api key again.");
+        eprintln!("ERROR: Your api-key setting may be invalid. Try setting your api key again.");
         std::process::exit(1);
     });
 
-    // Get properties from "setting.json".
+    // Get properties from the setting file.
     let mut setting_json_file = get_json_file(SETTINGS_JSON_NAME).unwrap_or_else(|err| {
         eprintln!("ERROR: {}", err);
         eprintln!("ERROR: Couldn't find \"setting file\". Try setting your city again.");
@@ -107,7 +107,7 @@ pub async fn check() -> Result<(), Box<dyn Error>> {
         }
         _ => {
             return Err(
-                "ERROR: Your city setting is not valid. Try setting your city again.".into(),
+                "ERROR: Your city setting may be invalid. Try setting your city again.".into(),
             );
         }
     }
@@ -211,9 +211,12 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
     let json_string = &data.to_string();
 
     let executable_dir = get_executable_directory()?;
-    File::create(format!("{}/{}.json", executable_dir, SETTINGS_JSON_NAME))
-        .unwrap()
-        .write_all(json_string.as_bytes())?;
+    File::create(format!(
+        "{}/weather-cli-{}.json",
+        executable_dir, SETTINGS_JSON_NAME
+    ))
+    .unwrap()
+    .write_all(json_string.as_bytes())?;
 
     Ok((city.name, selected_unit_name))
 }
@@ -224,7 +227,10 @@ pub async fn search_city(query: &String) -> Result<(), Box<dyn Error>> {
     let mut api_json_string = String::new();
     api_json_file.read_to_string(&mut api_json_string)?;
     let api_key_data: Value = serde_json::from_str(&api_json_string)?;
-    let api_key = api_key_data["key"].as_str().unwrap();
+    let api_key = api_key_data["key"].as_str().unwrap_or_else(|| {
+        eprintln!("ERROR: Your api-key setting may be invalid. Try setting your api key again.");
+        std::process::exit(1);
+    });
 
     let url =
         format!("http://api.openweathermap.org/geo/1.0/direct?q={query}&limit=10&appid={api_key}");
@@ -279,9 +285,12 @@ pub fn api_setup(key: String) -> Result<(), Box<dyn Error>> {
 
         let api_json_string = &api_json_data.to_string();
 
-        File::create(format!("{}/{}.json", executable_dir, API_JSON_NAME))
-            .unwrap()
-            .write_all(api_json_string.as_bytes())?;
+        File::create(format!(
+            "{}/weather-cli-{}.json",
+            executable_dir, API_JSON_NAME
+        ))
+        .unwrap()
+        .write_all(api_json_string.as_bytes())?;
 
         println!("Successfully updated your key!");
     }
