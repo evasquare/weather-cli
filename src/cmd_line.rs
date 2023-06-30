@@ -64,10 +64,10 @@ pub async fn init() {
             });
         }
         Some(Commands::About {}) => {
-            let splited_author_list: Vec<&str> = PROGRAM_AUTHORS.split(',').collect();
+            let splitted_author_list: Vec<&str> = PROGRAM_AUTHORS.split(',').collect();
 
             let mut authors = String::new();
-            for (index, one) in splited_author_list.into_iter().enumerate() {
+            for (index, one) in splitted_author_list.into_iter().enumerate() {
                 if index == 0 {
                     authors += one.trim();
                 } else {
