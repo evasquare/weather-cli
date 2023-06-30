@@ -54,10 +54,14 @@ pub async fn init() {
             };
         }
         Some(Commands::SetLocation { query }) => {
-            search_city(query).await.unwrap();
+            search_city(query).await.unwrap_or_else(|e| {
+                println!("ERROR: {}", e);
+            });
         }
         Some(Commands::ApiSetup { key }) => {
-            api_setup(key.to_string()).unwrap();
+            api_setup(key.to_string()).unwrap_or_else(|e| {
+                println!("ERROR: {}", e);
+            });
         }
         Some(Commands::About {}) => {
             let splited_author_list: Vec<&str> = PROGRAM_AUTHORS.split(',').collect();

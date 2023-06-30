@@ -1,8 +1,8 @@
 use crate::{get_executable_directory, get_json_file};
+use anyhow::{anyhow, Context, Result};
 use regex::Regex;
 use serde_json::Value;
 use std::{
-    error::Error,
     fmt,
     fs::File,
     io::{self, Read, Write},
@@ -40,77 +40,70 @@ mod constants {
 use self::constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME};
 
 /// Checks the weather information from the API.
-pub async fn check() -> Result<(), Box<dyn Error>> {
+pub async fn check() -> Result<()> {
     // Get the API key from "api.json".
-    let mut api_json_file = get_json_file(API_JSON_NAME).unwrap_or_else(|err| {
-        eprintln!("ERROR: {}", err);
-        eprintln!("ERROR: Couldn't find \"api-key setting file\". Try setting your api key again.");
-        std::process::exit(1);
-    });
+    let mut api_json_file = get_json_file(API_JSON_NAME)?;
 
     let mut api_json_string = String::new();
     api_json_file.read_to_string(&mut api_json_string)?;
-    let api_key_data: Value = serde_json::from_str(&api_json_string)?;
-    let api_key = api_key_data["key"].as_str().unwrap_or_else(|| {
-        eprintln!("ERROR: Your api-key setting may be invalid. Try setting your api key again.");
-        std::process::exit(1);
-    });
+    let api_key_data: Value =
+        serde_json::from_str(&api_json_string).context("The given JSON input may be invalid.")?;
+    let api_key = api_key_data["key"]
+        .as_str()
+        .context("Couldn't get the API key! Make sure you set your key.")?;
 
     // Get properties from the setting file.
-    let mut setting_json_file = get_json_file(SETTINGS_JSON_NAME).unwrap_or_else(|err| {
-        eprintln!("ERROR: {}", err);
-        eprintln!("ERROR: Couldn't find \"setting file\". Try setting your city again.");
-        std::process::exit(1);
-    });
+    let mut setting_json_file = get_json_file(SETTINGS_JSON_NAME)?;
     let mut setting_json_string = String::new();
     setting_json_file.read_to_string(&mut setting_json_string)?;
-    let setting_data: Value = serde_json::from_str(&setting_json_string)?;
+    let setting_data: Value = serde_json::from_str(&setting_json_string)
+        .context("The given JSON input may be invalid.")?;
 
-    let city_name: Option<&str> = setting_data["city_name"].as_str();
-    let lat: Option<f64> = setting_data["lat"].as_f64();
-    let lon: Option<f64> = setting_data["lon"].as_f64();
-    let preferred_unit: Option<i64> = setting_data["preferred_unit"].as_i64();
+    let city_name = setting_data["city_name"]
+        .as_str()
+        .context("Couldn't get the city name. Make sure you set your city.")?;
+    let lat = setting_data["lat"]
+        .as_f64()
+        .context("The \"lat\" option may be invalid f64 value.")?;
+    let lon = setting_data["lon"]
+        .as_f64()
+        .context("The \"lon\" option may be invalid f64 value.")?;
+    let preferred_unit = setting_data["preferred_unit"]
+        .as_i64()
+        .context("The \"preferred_unit\" option may be invalid i64 value.")?;
 
-    match (city_name, lat, lon, preferred_unit) {
-        (Some(city_name_value), Some(lat_value), Some(lon_value), Some(preferred_unit_value)) => {
-            let url = match preferred_unit_value {
-                1 => API_URL
-                    .replace("{lat_value}", lat_value.to_string().as_str())
-                    .replace("{lon_value}", lon_value.to_string().as_str())
-                    .replace("{api_key}", api_key)
-                    .replace("{unit}", "metric"),
-                2 => API_URL
-                    .replace("{lat_value}", lat_value.to_string().as_str())
-                    .replace("{lon_value}", lon_value.to_string().as_str())
-                    .replace("{api_key}", api_key)
-                    .replace("{unit}", "imperial"),
-                _ => unreachable!(),
-            };
+    let url = match preferred_unit {
+        1 => API_URL
+            .replace("{lat_value}", lat.to_string().as_str())
+            .replace("{lon_value}", lon.to_string().as_str())
+            .replace("{api_key}", api_key)
+            .replace("{unit}", "metric"),
+        2 => API_URL
+            .replace("{lat_value}", lat.to_string().as_str())
+            .replace("{lon_value}", lon.to_string().as_str())
+            .replace("{api_key}", api_key)
+            .replace("{unit}", "imperial"),
+        _ => unreachable!(),
+    };
 
-            let resp = reqwest::get(url).await?.text().await?;
-            let data: Value = serde_json::from_str(&resp)?;
+    let resp = reqwest::get(url).await?.text().await?;
+    let data: Value =
+        serde_json::from_str(&resp).context("The given JSON input may be invalid.")?;
 
-            let weather = (
-                format!("{}", &data["weather"][0]["main"]).replace('"', ""),
-                format!("{}", &data["weather"][0]["description"]).replace('"', ""),
-            );
-            let temp = format!("{}", &data["main"]["temp"]).replace('"', "");
+    let weather = (
+        format!("{}", &data["weather"][0]["main"]).replace('"', ""),
+        format!("{}", &data["weather"][0]["description"]).replace('"', ""),
+    );
+    let temp = format!("{}", &data["main"]["temp"]).replace('"', "");
 
-            let unit_symbol = match preferred_unit_value {
-                1 => "℃",
-                2 => "℉",
-                _ => unreachable!(),
-            };
+    let unit_symbol = match preferred_unit {
+        1 => "℃",
+        2 => "℉",
+        _ => unreachable!(),
+    };
 
-            println!("{}", city_name_value);
-            println!("{}{} / {} ({})", temp, unit_symbol, weather.0, weather.1);
-        }
-        _ => {
-            return Err(
-                "ERROR: Your city setting may be invalid. Try setting your city again.".into(),
-            );
-        }
-    }
+    println!("{}", city_name);
+    println!("{}{} / {} ({})", temp, unit_symbol, weather.0, weather.1);
 
     Ok(())
 }
@@ -169,14 +162,14 @@ fn show_cities(city_slice: &[City]) {
 }
 
 /// Prompts the user to select a city and preferred unit.
-fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn Error>> {
+fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str)> {
     let mut selected_city: String = String::new();
     println!("\nPlease select your city.");
     io::stdin().read_line(&mut selected_city)?;
     let selected_city: usize = selected_city.trim().parse()?;
 
     if selected_city - 1 >= city_vec.len() {
-        return Err("Invalid city index.".into());
+        return Err(anyhow!("Invalid city index."));
     }
 
     let mut selected_unit: String = String::new();
@@ -184,16 +177,19 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
     println!("1) Celcius");
     println!("2) Fahrenheit");
     io::stdin().read_line(&mut selected_unit)?;
-    let selected_unit: usize = selected_unit.trim().parse()?;
+    let selected_unit: usize = selected_unit
+        .trim()
+        .parse()
+        .context("Couldn't parse the input. It may be invalid usize value.")?;
 
     if !(1..=2).contains(&selected_unit) {
-        return Err("Invalid unit selection.".into());
+        return Err(anyhow!("Invalid unit selection."));
     }
 
     let selected_unit_name = match selected_unit {
         1 => "Celcius",
         2 => "Fahrenheit",
-        _ => unreachable!(),
+        _ => return Err(anyhow!("Input out of range!")),
     };
 
     let city = &city_vec[selected_city - 1];
@@ -202,7 +198,8 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
     let mut json_string = String::new();
     file.read_to_string(&mut json_string)?;
 
-    let mut data: Value = serde_json::from_str(&json_string)?;
+    let mut data: Value =
+        serde_json::from_str(&json_string).context("The given JSON input may be invalid.")?;
 
     data["city_name"] = city.name.into();
     data["lat"] = city.lat.into();
@@ -216,26 +213,28 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str), Box<dyn E
         executable_dir, SETTINGS_JSON_NAME
     ))
     .unwrap()
-    .write_all(json_string.as_bytes())?;
+    .write_all(json_string.as_bytes())
+    .context("Couldn't write JSON file.")?;
 
     Ok((city.name, selected_unit_name))
 }
 
 /// Retrieves cities with the search query and saves the selected city.
-pub async fn search_city(query: &String) -> Result<(), Box<dyn Error>> {
+pub async fn search_city(query: &String) -> Result<()> {
     let mut api_json_file = get_json_file(API_JSON_NAME)?;
     let mut api_json_string = String::new();
     api_json_file.read_to_string(&mut api_json_string)?;
-    let api_key_data: Value = serde_json::from_str(&api_json_string)?;
-    let api_key = api_key_data["key"].as_str().unwrap_or_else(|| {
-        eprintln!("ERROR: Your api-key setting may be invalid. Try setting your api key again.");
-        std::process::exit(1);
-    });
+    let api_key_data: Value =
+        serde_json::from_str(&api_json_string).context("The given JSON input may be invalid.")?;
+    let api_key = api_key_data["key"]
+        .as_str()
+        .context("Couldn't get the API key! Make sure you set your key.")?;
 
     let url =
         format!("http://api.openweathermap.org/geo/1.0/direct?q={query}&limit=10&appid={api_key}");
     let resp = reqwest::get(url).await?.text().await?;
-    let data: Value = serde_json::from_str(&resp).unwrap();
+    let data: Value =
+        serde_json::from_str(&resp).context("The given JSON input may be invalid.")?;
 
     let mut city_vec: Vec<City> = vec![];
 
@@ -268,10 +267,10 @@ pub async fn search_city(query: &String) -> Result<(), Box<dyn Error>> {
 }
 
 /// Saves the given API key for later usage.
-pub fn api_setup(key: String) -> Result<(), Box<dyn Error>> {
+pub fn api_setup(key: String) -> Result<()> {
     let executable_dir = get_executable_directory()?;
 
-    let regex = Regex::new(r"^[a-zA-Z0-9]+$").unwrap();
+    let regex = Regex::new(r"^[a-zA-Z0-9]+$")?;
 
     if (key.len() < 32 && key.len() > 32) || !regex.is_match(&key) {
         println!("Please enter a valid key!");
@@ -279,7 +278,8 @@ pub fn api_setup(key: String) -> Result<(), Box<dyn Error>> {
         let mut api_json_file = get_json_file(API_JSON_NAME)?;
         let mut api_json_string = String::new();
         api_json_file.read_to_string(&mut api_json_string)?;
-        let mut api_json_data: Value = serde_json::from_str(&api_json_string)?;
+        let mut api_json_data: Value = serde_json::from_str(&api_json_string)
+            .context("The given JSON input may be invalid.")?;
 
         api_json_data["key"] = key.into();
 
@@ -288,8 +288,7 @@ pub fn api_setup(key: String) -> Result<(), Box<dyn Error>> {
         File::create(format!(
             "{}/weather-cli-{}.json",
             executable_dir, API_JSON_NAME
-        ))
-        .unwrap()
+        ))?
         .write_all(api_json_string.as_bytes())?;
 
         println!("Successfully updated your key!");

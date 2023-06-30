@@ -1,4 +1,5 @@
-use std::{env, error::Error, fs::File, io::Write};
+use anyhow::{anyhow, Context, Result};
+use std::{env, fs::File, io::Write};
 pub mod cmd_line;
 pub mod weather;
 
@@ -13,29 +14,36 @@ pub mod program_info {
 }
 
 /// Returns the running executable directory.
-pub fn get_executable_directory() -> Result<String, Box<dyn Error>> {
-    let executable_path = env::current_exe()?;
-    let executable_directory = executable_path.parent().unwrap();
+pub fn get_executable_directory() -> Result<String> {
+    let executable_path =
+        env::current_exe().context("Couldn't get the execuatable file directory!")?;
+    let executable_directory = executable_path
+        .parent()
+        .context("Couldn't get the execuatable directory!")?;
 
     if let Some(dir_str) = executable_directory.to_str() {
         return Ok(dir_str.to_string());
     }
 
-    Err("Unable to get the executable directory.".into())
+    Err(anyhow!("Unable to get the executable directory."))
 }
 
 /// Formats the given file name with the executable directory.
-pub fn get_json_file(name: &str) -> Result<File, Box<dyn Error>> {
+pub fn get_json_file(name: &str) -> Result<File> {
     let executable_dir = get_executable_directory()?;
 
     let file = match File::open(format!("{}/weather-cli-{}.json", executable_dir, name)) {
         Ok(f) => f,
         Err(_) => {
             let mut new_file =
-                File::create(format!("{}/weather-cli-{}.json", executable_dir, name)).unwrap();
-            new_file.write_all("{}".as_bytes()).unwrap();
+                File::create(format!("{}/weather-cli-{}.json", executable_dir, name))
+                    .context("Couldn't create a json file.")?;
+            new_file
+                .write_all("{}".as_bytes())
+                .context("Couldn't create a json file.")?;
 
-            File::open(format!("{}/weather-cli-{}.json", executable_dir, name)).unwrap()
+            File::open(format!("{}/weather-cli-{}.json", executable_dir, name))
+                .context("Couldn't get the json file.")?
         }
     };
 
