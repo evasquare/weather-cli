@@ -173,8 +173,8 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str)> {
     }
 
     let mut selected_unit: String = String::new();
-    println!("\nDo you use Celcius or Fahrenheit?");
-    println!("1) Celcius");
+    println!("\nDo you use Celsius or Fahrenheit?");
+    println!("1) Celsius");
     println!("2) Fahrenheit");
     io::stdin().read_line(&mut selected_unit)?;
     let selected_unit: usize = selected_unit
@@ -187,7 +187,7 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str)> {
     }
 
     let selected_unit_name = match selected_unit {
-        1 => "Celcius",
+        1 => "Celsius",
         2 => "Fahrenheit",
         _ => return Err(anyhow!("Input out of range!")),
     };

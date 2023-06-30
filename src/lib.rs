@@ -16,10 +16,10 @@ pub mod program_info {
 /// Returns the running executable directory.
 pub fn get_executable_directory() -> Result<String> {
     let executable_path =
-        env::current_exe().context("Couldn't get the execuatable file directory!")?;
+        env::current_exe().context("Couldn't get the executable file directory!")?;
     let executable_directory = executable_path
         .parent()
-        .context("Couldn't get the execuatable directory!")?;
+        .context("Couldn't get the executable directory!")?;
 
     if let Some(dir_str) = executable_directory.to_str() {
         return Ok(dir_str.to_string());
