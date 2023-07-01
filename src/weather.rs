@@ -168,7 +168,7 @@ fn city_select<'a>(city_vec: &'a [City]) -> Result<(&'a str, &'a str)> {
     io::stdin().read_line(&mut selected_city)?;
     let selected_city: usize = selected_city.trim().parse()?;
 
-    if selected_city - 1 >= city_vec.len() {
+    if selected_city > city_vec.len() {
         return Err(anyhow!("Invalid city index."));
     }
 
@@ -272,7 +272,7 @@ pub fn api_setup(key: String) -> Result<()> {
 
     let regex = Regex::new(r"^[a-zA-Z0-9]+$")?;
 
-    if (key.len() < 32 && key.len() > 32) || !regex.is_match(&key) {
+    if key.len() != 32 || !regex.is_match(&key) {
         println!("Please enter a valid key!");
     } else {
         let mut api_json_file = get_json_file(API_JSON_NAME)?;
