@@ -28,6 +28,8 @@ mod constants {
     /// ## Example Usage
     ///
     /// ```
+    /// pub const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
+    ///
     /// let url = API_URL
     ///     .replace("{lat_value}", "37.3361663")
     ///     .replace("{lon_value}", "-121.890591")
@@ -143,9 +145,6 @@ struct City<'a> {
 ///     lon: -121.890591,
 ///     country: "US",
 /// };
-///
-/// println!("{}", city);
-/// // Output: "San Jose, US (lat: 37.3361663, lon: -121.890591)"
 /// ```
 impl<'a> fmt::Display for City<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> fmt::Result {
