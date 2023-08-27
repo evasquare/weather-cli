@@ -49,3 +49,32 @@ pub fn get_json_file(name: &str) -> Result<File> {
 
     Ok(file)
 }
+
+pub fn get_emoji(icon_id: &str) -> String {
+    let return_value = match icon_id {
+        "01d" => "☀️",
+        "02d" => "⛅️",
+        "03d" => "☁️",
+        "04d" => "☁️",
+        "09d" => "🌧️",
+        "10d" => "🌦️",
+        "11d" => "⛈️",
+        "13d" => "❄️",
+        "50d" => "🌨️",
+        "01n" => "🌑",
+        "02n" => "🌑☁️",
+        "03n" => "☁️",
+        "04n" => "☁️☁️",
+        "09n" => "🌧️",
+        "10n" => "☔️",
+        "11n" => "⛈️",
+        "13n" => "❄️",
+        _ => "",
+    };
+
+    if !return_value.is_empty() {
+        format!("{} ", return_value)
+    } else {
+        return_value.to_string()
+    }
+}

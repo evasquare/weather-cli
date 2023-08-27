@@ -1,4 +1,4 @@
-use crate::{get_executable_directory, get_json_file};
+use crate::{get_emoji, get_executable_directory, get_json_file};
 use anyhow::{anyhow, Context, Result};
 use regex::Regex;
 use serde_json::Value;
@@ -90,20 +90,24 @@ pub async fn check() -> Result<()> {
     let data: Value =
         serde_json::from_str(&resp).context("The given JSON input may be invalid.")?;
 
-    let weather = (
+    let (main, description, icon_id) = (
         format!("{}", &data["weather"][0]["main"]).replace('"', ""),
         format!("{}", &data["weather"][0]["description"]).replace('"', ""),
+        format!("{}", &data["weather"][0]["icon"]).replace('"', ""),
     );
     let temp = format!("{}", &data["main"]["temp"]).replace('"', "");
-
     let unit_symbol = match preferred_unit {
         1 => "℃",
         2 => "℉",
         _ => unreachable!(),
     };
+    let emoji = get_emoji(icon_id.as_str());
 
     println!("{}", city_name);
-    println!("{}{} / {} ({})", temp, unit_symbol, weather.0, weather.1);
+    println!(
+        "{}{} / {}{} ({})",
+        temp, unit_symbol, emoji, main, description
+    );
 
     Ok(())
 }
