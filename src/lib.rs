@@ -78,3 +78,6 @@ pub fn get_emoji(icon_id: &str) -> String {
         return_value.to_string()
     }
 }
+
+#[cfg(test)]
+mod tests;
