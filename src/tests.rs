@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod test_weather {
-    use crate::weather::api_setup;
+    use crate::weather::setup_api;
 
     #[test]
     fn test_api_setup() {
         // Please note that the API key is only for testing purposes
         // and is not valid for actual API access.
-        let setup_result = api_setup(String::from("abcdefghijklmnopqrstuvwxyzabcdef"));
+        let setup_result = setup_api(String::from("abcdefghijklmnopqrstuvwxyzabcdef"));
         assert!(setup_result.is_ok());
     }
 }

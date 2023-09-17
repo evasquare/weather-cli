@@ -270,7 +270,7 @@ pub async fn search_city(query: &String) -> Result<()> {
 }
 
 /// Saves the given API key for later usage.
-pub fn api_setup(key: String) -> Result<()> {
+pub fn setup_api(key: String) -> Result<()> {
     let executable_dir = get_executable_directory()?;
 
     let regex = Regex::new(r"^[a-zA-Z0-9]+$")?;

@@ -1,7 +1,7 @@
 use crate::{
     get_executable_directory,
     program_info::{PROGRAM_AUTHORS, PROGRAM_DESCRIPTION, PROGRAM_NAME},
-    weather::{api_setup, check, search_city},
+    weather::{check, search_city, setup_api},
 };
 use clap::{Parser, Subcommand};
 
@@ -30,7 +30,7 @@ enum Commands {
     },
 
     /// Setup the OpenWeather API Key
-    ApiSetup {
+    SetupApi {
         /// API key from OpenWeather.
         #[arg(short, long)]
         key: String,
@@ -58,8 +58,8 @@ pub async fn init() {
                 println!("ERROR: {}", e);
             });
         }
-        Some(Commands::ApiSetup { key }) => {
-            api_setup(key.to_string()).unwrap_or_else(|e| {
+        Some(Commands::SetupApi { key }) => {
+            setup_api(key.to_string()).unwrap_or_else(|e| {
                 println!("ERROR: {}", e);
             });
         }
