@@ -41,19 +41,22 @@ City list:
 Please select your city.
 1
 
-Do you use Celcius or Fahrenheit?
-1) Celcius
+Do you use Celsius or Fahrenheit?
+1) Celsius
 2) Fahrenheit
 2
 
+Do you want to display emoji? (y/n)
+n
+
 San Jose is now your city!
-We'll use Fahrenheit for you.
+We'll use Imperial for you.
 ```
 
 2. Weather Check
 
 ```
 $ weather-cli check                          
-San Jose
-57.61℉ / Clouds (overcast clouds)
+San Jose (US)
+58.62℉ / Clouds (broken clouds)
 ```
