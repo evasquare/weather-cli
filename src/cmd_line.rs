@@ -1,7 +1,8 @@
 use crate::{
+    api_usage::{check, search_city},
     get_executable_directory,
     program_info::{PROGRAM_AUTHORS, PROGRAM_DESCRIPTION, PROGRAM_NAME},
-    weather::{check, search_city, setup_api},
+    user_setup::setup_api,
 };
 use clap::{Parser, Subcommand};
 

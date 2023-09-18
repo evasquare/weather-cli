@@ -1,27 +1,15 @@
 #[cfg(test)]
-mod test_weather {
-    use crate::weather::setup_api;
-
-    #[test]
-    fn test_api_setup() {
-        // Please note that the API key is only for testing purposes
-        // and is not valid for actual API access.
-        let setup_result = setup_api(String::from("abcdefghijklmnopqrstuvwxyzabcdef"));
-        assert!(setup_result.is_ok());
-    }
-}
-
-#[cfg(test)]
-mod test_lib {
-    use super::super::{get_emoji, get_executable_directory};
-
+mod unit_test {
     #[test]
     fn test_get_executable_directory() {
+        use super::super::get_executable_directory;
         assert!(get_executable_directory().is_ok());
     }
 
     #[test]
     fn test_get_emoji() {
+        use crate::get_emoji;
+
         struct TestCase<'a> {
             input: &'a str,
             output: String,
@@ -105,5 +93,39 @@ mod test_lib {
         for test_case in test_cases {
             assert_eq!(get_emoji(test_case.input), test_case.output);
         }
+    }
+
+    #[test]
+    fn test_update_setting() {
+        use crate::{
+            constants::SETTINGS_JSON_NAME,
+            read_json_file,
+            user_setup::{update_setting, City, Unit, UserSetting},
+        };
+
+        let option_setting_args = UserSetting {
+            city: Some(City {
+                name: String::from("London"),
+                lat: 51.5074,
+                lon: 0.1278,
+                country: String::from("GB"),
+            }),
+            unit: Some(Unit::Imperial),
+            display_emoji: Some(false),
+        };
+
+        println!("{:#?}", option_setting_args);
+
+        let result = update_setting(&option_setting_args);
+        println!("{:#?}", result);
+        assert!(result.is_ok());
+
+        // Get json data from an existing setting file.
+        let json_string = read_json_file(SETTINGS_JSON_NAME).unwrap();
+        let json_data: UserSetting = serde_json::from_str(&json_string).unwrap();
+
+        assert_eq!(json_data.city.unwrap().name, String::from("London"));
+        assert_eq!(json_data.unit.unwrap(), Unit::Imperial);
+        assert!(!json_data.display_emoji.unwrap());
     }
 }

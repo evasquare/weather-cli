@@ -1,7 +1,13 @@
 use anyhow::{anyhow, Context, Result};
-use std::{env, fs::File, io::Write};
+use std::{
+    env,
+    fs::File,
+    io::{Read, Write},
+};
+
+pub mod api_usage;
 pub mod cmd_line;
-pub mod weather;
+pub mod user_setup;
 
 /// Constants for the information of the program.
 pub mod program_info {
@@ -11,6 +17,37 @@ pub mod program_info {
     pub const PROGRAM_DESCRIPTION: &str = "Weather for command-line fans!";
     /// The authors of the program.
     pub const PROGRAM_AUTHORS: &str = "decaplanet";
+}
+
+/// Constants related to the API and settings.
+mod constants {
+    /// The name of the json file for the API key.
+    pub const API_JSON_NAME: &str = "api";
+
+    /// The name of the json file for settings.
+    pub const SETTINGS_JSON_NAME: &str = "settings";
+
+    /// The URL template for the OpenWeatherMap API.
+    ///
+    /// This template can be used to retrieve weather data by replacing the following placeholders:
+    ///
+    /// - `{lat_value}`: Latitude value of the location.
+    /// - `{lon_value}`: Longitude value of the location.
+    /// - `{api_key}`: Your OpenWeatherMap API key.
+    /// - `{unit}`: The desired measurement unit. (ex. `metric` or `imperial`)
+    ///
+    /// ## Example Usage
+    ///
+    /// ```
+    /// pub const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
+    ///
+    /// let url = API_URL
+    ///     .replace("{lat_value}", "37.3361663")
+    ///     .replace("{lon_value}", "-121.890591")
+    ///     .replace("{api_key}", "EXAMPLE_KEY")
+    ///     .replace("{unit}", "imperial");
+    /// ```
+    pub const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
 }
 
 /// Returns the running executable directory.
@@ -50,6 +87,16 @@ pub fn get_json_file(name: &str) -> Result<File> {
     Ok(file)
 }
 
+/// Reads the given json file and returns the string.
+pub fn read_json_file(json_name: &str) -> Result<String> {
+    let mut file = get_json_file(json_name)?;
+    let mut json_string = String::new();
+    file.read_to_string(&mut json_string)?;
+
+    Ok(json_string)
+}
+
+/// Returns the emoji for the given icon id.
 pub fn get_emoji(icon_id: &str) -> String {
     let return_value = match icon_id {
         "01d" => "☀️",
@@ -79,5 +126,6 @@ pub fn get_emoji(icon_id: &str) -> String {
     }
 }
 
+/// This module is only used for testing.
 #[cfg(test)]
 mod tests;
