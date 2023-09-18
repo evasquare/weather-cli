@@ -40,7 +40,7 @@ pub async fn check() -> Result<()> {
             .replace("{lon_value}", city.lon.to_string().as_str())
             .replace("{api_key}", api_key)
             .replace("{unit}", "imperial"),
-        _ => unreachable!(),
+        _ => return Err(anyhow!("Failed to read the setting! Please run 'set-location' command to set your city and preferred unit.")),
     };
 
     let resp = reqwest::get(url).await?.text().await?;
