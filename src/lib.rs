@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Context, Result};
+
 use std::{
     env,
     fs::File,
@@ -87,13 +88,49 @@ pub fn get_json_file(name: &str) -> Result<File> {
     Ok(file)
 }
 
+pub enum ErrorMessageType {
+    SettingRead,
+    ApiResponseRead,
+}
+
+fn get_file_read_error_message(error_type: ErrorMessageType, context: &str) -> String {
+    match error_type {
+        ErrorMessageType::SettingRead => {
+            format!("Failed to read the following file: {}", context)
+        }
+        ErrorMessageType::ApiResponseRead => {
+            format!("The given '{}' JSON input may be invalid.", context)
+        }
+    }
+}
+
 /// Reads the given json file and returns the string.
-pub fn read_json_file(json_name: &str) -> Result<String> {
+pub fn read_json_file<T: serde::de::DeserializeOwned>(json_name: &str) -> Result<T> {
+    use constants::API_JSON_NAME;
+
     let mut file = get_json_file(json_name)?;
     let mut json_string = String::new();
     file.read_to_string(&mut json_string)?;
 
-    Ok(json_string)
+    let api_key_data: T = serde_json::from_str(&json_string).context(
+        get_file_read_error_message(ErrorMessageType::SettingRead, API_JSON_NAME),
+    )?;
+
+    Ok(api_key_data)
+}
+
+/// Reads the given json file and returns the string.
+pub fn read_json_response<T: serde::de::DeserializeOwned>(
+    response: &str,
+    error_message_type: ErrorMessageType,
+    error_context: &str,
+) -> Result<T> {
+    let response_data: T = serde_json::from_str(response).context(get_file_read_error_message(
+        error_message_type,
+        error_context,
+    ))?;
+
+    Ok(response_data)
 }
 
 /// Returns the emoji for the given icon id.

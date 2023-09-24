@@ -121,8 +121,7 @@ mod unit_test {
         assert!(result.is_ok());
 
         // Get json data from an existing setting file.
-        let json_string = read_json_file(SETTINGS_JSON_NAME).unwrap();
-        let json_data: UserSetting = serde_json::from_str(&json_string).unwrap();
+        let json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME).unwrap();
 
         assert_eq!(json_data.city.unwrap().name, String::from("London"));
         assert_eq!(json_data.unit.unwrap(), Unit::Imperial);

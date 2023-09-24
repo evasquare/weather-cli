@@ -6,8 +6,8 @@ use std::{fs::File, io::Write};
 
 /// Data type for the API setting file.
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
-pub struct ApiSetting<'a> {
-    pub key: &'a str,
+pub struct ApiSetting {
+    pub key: String,
 }
 
 /// Saves the given API key into the API setting file.
@@ -21,7 +21,7 @@ pub fn setup_api(key: String) -> Result<()> {
     if key.len() != 32 || !regex.is_match(&key) {
         println!("Please enter a valid key!");
     } else {
-        let new_api_setting = ApiSetting { key: key.as_str() };
+        let new_api_setting = ApiSetting { key };
 
         let api_json_string = serde_json::to_string(&new_api_setting)?;
         File::create(format!(
@@ -68,6 +68,19 @@ impl fmt::Display for Unit {
         }
     }
 }
+pub trait GetUnitSymbol {
+    /// A function signature that returns the symbol of the unit.
+    fn get_symbol(&self) -> &'static str;
+}
+impl GetUnitSymbol for Unit {
+    /// A function implementation that returns the symbol of the unit.
+    fn get_symbol(&self) -> &'static str {
+        match self {
+            Unit::Metric => "℃",
+            Unit::Imperial => "℉",
+        }
+    }
+}
 
 /// User setting data type.
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
@@ -81,9 +94,7 @@ pub struct UserSetting {
 pub fn update_setting(setting_args: &UserSetting) -> Result<()> {
     use crate::constants::SETTINGS_JSON_NAME;
 
-    let json_string = read_json_file(SETTINGS_JSON_NAME)?;
-    let mut json_data: UserSetting = serde_json::from_str(&json_string)
-        .context("The given 'UserSetting' JSON input may be invalid.")?;
+    let mut json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME)?;
 
     // Update the setting file with given arguments.
     // 1. City
