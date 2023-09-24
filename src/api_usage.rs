@@ -61,7 +61,6 @@ fn get_event_info(
 /// Checks the weather information from the API.
 pub async fn check() -> Result<()> {
     use crate::get_emoji;
-    use crate::user_setup::GetUnitSymbol;
 
     // Read API Key.
     let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME);
@@ -88,10 +87,6 @@ pub async fn check() -> Result<()> {
         "WeatherApiResponse",
     )?;
 
-    let unit_symbol = match setting_json_data.unit {
-        Some(unit) => unit.get_symbol(),
-        _ => unreachable!(),
-    };
     let emoji = match setting_json_data.display_emoji {
         Some(true) => get_emoji(response_data.weather[0].icon.as_str()),
         Some(false) => String::new(),
@@ -106,23 +101,30 @@ pub async fn check() -> Result<()> {
     )?;
 
     // Print output.
-    if let Some(city) = setting_json_data.city {
+    if let (Some(city), Some(selected_unit)) = (setting_json_data.city, &setting_json_data.unit) {
+        let wind_unit = match selected_unit {
+            Unit::Metric => "m/s",
+            Unit::Imperial => "mph",
+        };
+
         println!("{} ({})", city.name, city.country);
 
         println!(
-            "{}{} / {}{} ({})",
+            "{}° / {}{} ({})",
             response_data.main.temp,
-            unit_symbol,
             emoji,
             response_data.weather[0].main,
             response_data.weather[0].description
         );
         println!(
-            "H: {}{}, L: {}{}",
-            response_data.main.temp_max, unit_symbol, response_data.main.temp_min, unit_symbol
+            "H: {}°, L: {}°",
+            response_data.main.temp_max, response_data.main.temp_min
         );
 
-        println!("\n- Wind Speed: {},", response_data.wind.speed);
+        println!(
+            "\n- Wind Speed: {} {},",
+            response_data.wind.speed, wind_unit
+        );
         println!("- Humidity: {} %,", response_data.main.humidity);
         println!("- Pressure: {} hPa", response_data.main.pressure);
         println!("- {}", upcoming_event.0);

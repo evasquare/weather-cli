@@ -68,19 +68,6 @@ impl fmt::Display for Unit {
         }
     }
 }
-pub trait GetUnitSymbol {
-    /// A function signature that returns the symbol of the unit.
-    fn get_symbol(&self) -> &'static str;
-}
-impl GetUnitSymbol for Unit {
-    /// A function implementation that returns the symbol of the unit.
-    fn get_symbol(&self) -> &'static str {
-        match self {
-            Unit::Metric => "℃",
-            Unit::Imperial => "℉",
-        }
-    }
-}
 
 /// User setting data type.
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
