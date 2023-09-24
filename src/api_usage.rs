@@ -26,9 +26,9 @@ impl<T: TimeZone> std::fmt::Display for EventInfo<T> {
             EventInfo::Sunrise(sunrise_time) => sunrise_time
                 .with_timezone(&Local)
                 .format("Sunrise: %I:%M %p"),
-            EventInfo::Sunset(sunset_time) => sunset_time
-                .with_timezone(&Local)
-                .format("Sunrise: %I:%M %p"),
+            EventInfo::Sunset(sunset_time) => {
+                sunset_time.with_timezone(&Local).format("Sunset: %I:%M %p")
+            }
         };
         write!(f, "{}", local_time)
     }
