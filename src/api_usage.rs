@@ -246,7 +246,7 @@ pub async fn search_city(query: &String) -> Result<()> {
             let error_msg = city_select(&city_vec);
 
             if let Err(e) = error_msg {
-                println!("ERROR: {}. Exit the program...", e);
+                println!("ERROR: {}. Exiting the program...", e);
             }
         }
     };
