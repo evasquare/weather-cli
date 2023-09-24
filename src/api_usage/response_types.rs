@@ -1,9 +1,7 @@
-use serde::Deserialize;
-
 // API Documentation:
 // https://openweathermap.org/current
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct WeatherApiResponse {
     pub coord: Coord,
     pub weather: Vec<Weather>,
@@ -26,13 +24,13 @@ pub struct WeatherApiResponse {
     name: String,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct Coord {
     pub lon: f64,
     pub lat: f64,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct Weather {
     pub id: u32,
     pub main: String,
@@ -40,7 +38,7 @@ pub struct Weather {
     pub icon: String,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct Main {
     pub temp: f64,
     pub feels_like: f64,
@@ -52,14 +50,14 @@ pub struct Main {
     pub grnd_level: Option<u32>,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct Wind {
     pub speed: f64,
     pub deg: u32,
     pub gust: Option<f64>,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct Rain {
     #[serde(rename = "1h")]
     pub one_h: Option<f64>,
@@ -67,7 +65,7 @@ pub struct Rain {
     pub three_h: Option<f64>,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct Snow {
     #[serde(rename = "1h")]
     pub one_h: Option<f64>,
@@ -75,12 +73,12 @@ pub struct Snow {
     pub three_h: Option<f64>,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct Clouds {
     pub all: u32,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct Sys {
     #[serde(rename = "type")]
     pub type_: u32,
