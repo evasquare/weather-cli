@@ -20,7 +20,7 @@ weather-cli api-setup --key "EXAMPLE_KEY"
 | ------------ | -------------------------------------- |
 | check        | Check weather information in your city |
 | set-location | Search and set your city               |
-| api-setup    | Setup the OpenWeather API Key          |
+| setup-api    | Setup the OpenWeather API Key          |
 | about        | View information about the program     |
 | help         | View the list of commands              |
 
