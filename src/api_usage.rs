@@ -6,7 +6,7 @@ use crate::{
 };
 use crate::{read_json_response, ErrorMessageType};
 use anyhow::{anyhow, Context, Result};
-use chrono::{DateTime, Local, TimeZone, Utc};
+use chrono::{DateTime, FixedOffset, TimeZone, Utc};
 
 mod response_types;
 
@@ -20,15 +20,14 @@ enum EventInfo<T: TimeZone> {
     Sunrise(DateTime<T>),
     Sunset(DateTime<T>),
 }
-impl<T: TimeZone> std::fmt::Display for EventInfo<T> {
+impl<T: TimeZone> std::fmt::Display for EventInfo<T>
+where
+    T::Offset: std::fmt::Display,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let local_time = match self {
-            EventInfo::Sunrise(sunrise_time) => sunrise_time
-                .with_timezone(&Local)
-                .format("Sunrise: %I:%M %p"),
-            EventInfo::Sunset(sunset_time) => {
-                sunset_time.with_timezone(&Local).format("Sunset: %I:%M %p")
-            }
+            EventInfo::Sunrise(sunrise_time) => sunrise_time.format("Sunrise: %I:%M %p"),
+            EventInfo::Sunset(sunset_time) => sunset_time.format("Sunset: %I:%M %p"),
         };
         write!(f, "{}", local_time)
     }
@@ -36,17 +35,23 @@ impl<T: TimeZone> std::fmt::Display for EventInfo<T> {
 
 /// Returns the sunrise and sunset time.
 /// The first element in the returned array is the next upcoming event.
-fn get_event_info(
+fn get_local_event_info(
     current_timestamp: i64,
     sunrise_timestamp: i64,
     sunset_timestamp: i64,
-) -> Result<(EventInfo<Utc>, EventInfo<Utc>)> {
+    timezone: i32,
+) -> Result<(EventInfo<FixedOffset>, EventInfo<FixedOffset>)> {
+    let timezone = FixedOffset::east_opt(timezone).context("Failed to read timezone.")?;
+
     let current_time = DateTime::<Utc>::from_timestamp(current_timestamp, 0)
-        .context("Failed to read current Time.")?;
-    let sunrise =
-        DateTime::from_timestamp(sunrise_timestamp, 0).context("Failed to read sunrise time.")?;
-    let sunset =
-        DateTime::from_timestamp(sunset_timestamp, 0).context("Failed to read sunset Time.")?;
+        .context("Failed to read current Time.")?
+        .with_timezone(&timezone);
+    let sunrise = DateTime::<Utc>::from_timestamp(sunrise_timestamp, 0)
+        .context("Failed to read sunrise time.")?
+        .with_timezone(&timezone);
+    let sunset = DateTime::<Utc>::from_timestamp(sunset_timestamp, 0)
+        .context("Failed to read sunset Time.")?
+        .with_timezone(&timezone);
 
     // The first element should be the next upcoming event.
     if current_time < sunrise {
@@ -94,10 +99,11 @@ pub async fn check() -> Result<()> {
     };
 
     let current_timestamp = get_current_utc().timestamp();
-    let upcoming_event = get_event_info(
+    let upcoming_event = get_local_event_info(
         current_timestamp as i64,
         response_data.sys.sunrise as i64,
         response_data.sys.sunset as i64,
+        response_data.timezone,
     )?;
 
     // Print output.
