@@ -58,12 +58,12 @@ I'll use imperial for you.
 ```
 $ weather-cli check                          
 San Jose (US)
-59.61° / Clouds (overcast clouds)
-H: 64.26°, L: 54.88°
+64.69° / Clouds (scattered clouds)
+H: 69.53°, L: 58.71°
 
 - Wind Speed: 3.44 mph,
-- Humidity: 77 %,
-- Pressure: 1017 hPa
-- Sunset: 11:02 AM
-  (Sunrise: 10:56 PM)
+- Humidity: 69 %,
+- Pressure: 1018 hPa
+- Sunset: 07:02 PM
+  (Sunrise: 06:56 AM)
 ```
