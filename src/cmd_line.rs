@@ -1,24 +1,25 @@
+use clap::Parser;
+
 use crate::{
     api_usage::{check, search_city},
     get_executable_directory,
     program_info::{PROGRAM_AUTHORS, PROGRAM_DESCRIPTION, PROGRAM_NAME},
     user_setup::setup_api,
 };
-use clap::{Parser, Subcommand};
 
 const ABOUT: &str = "# weather-cli : Weather for command-line fans!";
 
-#[derive(Parser)]
+#[derive(clap::Parser)]
 #[command(author, version, about = ABOUT, long_about = None)]
 struct Cli {
-    /// Optional name to operate on
+    /// Optional name to operate on.
     name: Option<String>,
 
     #[command(subcommand)]
     command: Option<Commands>,
 }
 
-#[derive(Subcommand)]
+#[derive(clap::Subcommand)]
 enum Commands {
     /// Check weather information in your city.
     Check {},
@@ -30,7 +31,7 @@ enum Commands {
         query: String,
     },
 
-    /// Setup the OpenWeather API Key
+    /// Setup the OpenWeather API Key.
     SetupApi {
         /// API key from OpenWeather.
         #[arg(short, long)]

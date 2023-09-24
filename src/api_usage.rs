@@ -1,77 +1,135 @@
+use crate::api_usage::response_types::WeatherApiResponse;
 use crate::{
     constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME},
     read_json_file,
     user_setup::{update_setting, ApiSetting, City, Unit, UserSetting},
 };
+use crate::{read_json_response, ErrorMessageType};
 use anyhow::{anyhow, Context, Result};
+use chrono::{DateTime, Local, TimeZone, Utc};
 
 mod response_types;
 
+/// Returns current UTC timestamp.
+fn get_current_utc() -> DateTime<Utc> {
+    Utc::now()
+}
+
+/// DateTime wrapper for sunrise and sunset.
+enum EventInfo<T: TimeZone> {
+    Sunrise(DateTime<T>),
+    Sunset(DateTime<T>),
+}
+impl<T: TimeZone> std::fmt::Display for EventInfo<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let local_time = match self {
+            EventInfo::Sunrise(sunrise_time) => sunrise_time
+                .with_timezone(&Local)
+                .format("Sunrise: %I:%M %p"),
+            EventInfo::Sunset(sunset_time) => sunset_time
+                .with_timezone(&Local)
+                .format("Sunrise: %I:%M %p"),
+        };
+        write!(f, "{}", local_time)
+    }
+}
+
+/// Returns the sunrise and sunset time.
+/// The first element in the returned array is the next upcoming event.
+fn get_event_info(
+    current_timestamp: i64,
+    sunrise_timestamp: i64,
+    sunset_timestamp: i64,
+) -> Result<(EventInfo<Utc>, EventInfo<Utc>)> {
+    let current_time = DateTime::<Utc>::from_timestamp(current_timestamp, 0)
+        .context("Failed to read current Time.")?;
+    let sunrise =
+        DateTime::from_timestamp(sunrise_timestamp, 0).context("Failed to read sunrise time.")?;
+    let sunset =
+        DateTime::from_timestamp(sunset_timestamp, 0).context("Failed to read sunset Time.")?;
+
+    // The first element should be the next upcoming event.
+    if current_time < sunrise {
+        Ok((EventInfo::Sunrise(sunrise), EventInfo::Sunset(sunset)))
+    } else if current_time < sunset {
+        Ok((EventInfo::Sunset(sunset), EventInfo::Sunrise(sunrise)))
+    } else {
+        Ok((EventInfo::Sunrise(sunrise), EventInfo::Sunset(sunset)))
+    }
+}
+
 /// Checks the weather information from the API.
 pub async fn check() -> Result<()> {
-    use crate::api_usage::response_types::WeatherApiResponse;
     use crate::get_emoji;
 
-    // Read API Key
-    let api_json_string = read_json_file(API_JSON_NAME).context(format!(
-        "Failed to read the following file: {}",
-        API_JSON_NAME
-    ))?;
-    let api_key_data: ApiSetting = serde_json::from_str(&api_json_string).context(format!(
-        "Failed to read the following file: {}",
-        API_JSON_NAME
-    ))?;
-    let api_key = api_key_data.key;
-
+    // Read API Key.
+    let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME);
+    let api_key = api_json_data?.key;
     // Get properties from the setting file.
-    let setting_json_string = read_json_file(SETTINGS_JSON_NAME)?;
-    let setting_json_data: UserSetting = serde_json::from_str(&setting_json_string).context(
-        format!("Failed to read the following file: {}", SETTINGS_JSON_NAME),
-    )?;
+    let setting_json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME)?;
 
     let url = match (&setting_json_data.city, &setting_json_data.unit) {
-        (Some(city), Some(Unit::Metric)) => API_URL
-            .replace("{lat_value}", city.lat.to_string().as_str())
-            .replace("{lon_value}", city.lon.to_string().as_str())
-            .replace("{api_key}", api_key)
-            .replace("{unit}", "metric"),
-        (Some(city), Some(Unit::Imperial)) => API_URL
-            .replace("{lat_value}", city.lat.to_string().as_str())
-            .replace("{lon_value}", city.lon.to_string().as_str())
-            .replace("{api_key}", api_key)
-            .replace("{unit}", "imperial"),
+        (Some(city), Some(unit)) => {
+            let unit_str = unit.to_string();
+
+            API_URL
+            .replace("{lat_value}", &city.lat.to_string())
+            .replace("{lon_value}", &city.lon.to_string())
+            .replace("{api_key}", &api_key)
+            .replace("{unit}", &unit_str)},
         _ => return Err(anyhow!("Failed to read the setting! Please run 'set-location' command to set your city and preferred unit.")),
     };
 
-    let resp = reqwest::get(url).await?.text().await?;
-    let response_data: WeatherApiResponse = serde_json::from_str(&resp)
-        .context("The given 'WeatherApiResponse' JSON input may be invalid.")?;
-
-    let (main, description, icon_id) = (
-        response_data.weather[0].main.replace('"', ""),
-        response_data.weather[0].description.replace('"', ""),
-        response_data.weather[0].icon.replace('"', ""),
-    );
-
-    let temp = format!("{}", response_data.main.temp).replace('"', "");
-    let unit_symbol = match setting_json_data.unit {
-        Some(Unit::Metric) => "℃",
-        Some(Unit::Imperial) => "℉",
-        _ => unreachable!(),
-    };
+    let response = reqwest::get(url).await?.text().await?;
+    let response_data = read_json_response::<WeatherApiResponse>(
+        &response,
+        ErrorMessageType::ApiResponseRead,
+        "WeatherApiResponse",
+    )?;
 
     let emoji = match setting_json_data.display_emoji {
-        Some(true) => get_emoji(icon_id.as_str()),
+        Some(true) => get_emoji(response_data.weather[0].icon.as_str()),
         Some(false) => String::new(),
         _ => unreachable!(),
     };
 
-    if let Some(city) = setting_json_data.city {
+    let current_timestamp = get_current_utc().timestamp();
+    let upcoming_event = get_event_info(
+        current_timestamp as i64,
+        response_data.sys.sunrise as i64,
+        response_data.sys.sunset as i64,
+    )?;
+
+    // Print output.
+    if let (Some(city), Some(selected_unit)) = (setting_json_data.city, &setting_json_data.unit) {
+        let wind_unit = match selected_unit {
+            Unit::Metric => "m/s",
+            Unit::Imperial => "mph",
+        };
+
         println!("{} ({})", city.name, city.country);
+
         println!(
-            "{}{} / {}{} ({})",
-            temp, unit_symbol, emoji, main, description
+            "{}° / {}{} ({})",
+            response_data.main.temp,
+            emoji,
+            response_data.weather[0].main,
+            response_data.weather[0].description
         );
+        println!(
+            "H: {}°, L: {}°",
+            response_data.main.temp_max, response_data.main.temp_min
+        );
+
+        println!(
+            "\n- Wind Speed: {} {},",
+            response_data.wind.speed, wind_unit
+        );
+        println!("- Humidity: {} %,", response_data.main.humidity);
+        println!("- Pressure: {} hPa", response_data.main.pressure);
+        println!("- {}", upcoming_event.0);
+        println!("  ({})", upcoming_event.1);
+
         Ok(())
     } else {
         Err(anyhow!("Couldn't find city!"))
@@ -101,7 +159,7 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
     }
     let city = &city_vec[selected_city - 1];
 
-    // Select unit
+    // Select unit.
     let mut selected_unit: String = String::new();
     println!("\nDo you use Celsius or Fahrenheit?");
     println!("1) Celsius");
@@ -111,7 +169,7 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
     let selected_unit: usize = selected_unit
         .trim()
         .parse()
-        .context("Couldn't parse the input. It may be invalid usize value.")?;
+        .context("Couldn't parse the input. The input may be invalid usize value.")?;
     if !(1..=2).contains(&selected_unit) {
         return Err(anyhow!("Invalid unit selection."));
     }
@@ -148,6 +206,7 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
         display_emoji: Some(emoji_option),
     };
     update_setting(&user_setting)?;
+
     Ok((city.name.as_str(), selected_unit))
 }
 
@@ -155,13 +214,11 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
 pub async fn search_city(query: &String) -> Result<()> {
     use serde_json::Value;
 
-    let api_json_string = read_json_file(API_JSON_NAME)?;
-    let api_key_data: ApiSetting = serde_json::from_str(&api_json_string)
-        .context("The given 'ApiSetting' JSON input may be invalid.")?;
+    let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME)?;
 
     let url = format!(
         "http://api.openweathermap.org/geo/1.0/direct?q={}&limit=10&appid={}",
-        query, api_key_data.key
+        query, api_json_data.key
     );
     let response = reqwest::get(url).await?.text().await?;
     let data: Value =
@@ -182,7 +239,7 @@ pub async fn search_city(query: &String) -> Result<()> {
     match city_select(&city_vec) {
         Ok((city_name, unit_name)) => {
             println!("\n{} is now your city!", city_name);
-            println!("We'll use {} for you.", unit_name);
+            println!("I'll use {} for you.", unit_name);
         }
         Err(e) => {
             println!("ERROR: {}", e);

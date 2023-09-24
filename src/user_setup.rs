@@ -2,25 +2,26 @@ use crate::{get_executable_directory, read_json_file};
 use anyhow::{Context, Result};
 use core::fmt;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::{fs::File, io::Write};
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct ApiSetting<'a> {
-    pub key: &'a str,
+/// Data type for the API setting file.
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
+pub struct ApiSetting {
+    pub key: String,
 }
 
-/// Saves the given API key for later usage.
+/// Saves the given API key into the API setting file.
 pub fn setup_api(key: String) -> Result<()> {
     use crate::constants::API_JSON_NAME;
 
     let executable_dir = get_executable_directory()?;
     let regex = Regex::new(r"^[a-zA-Z0-9]+$")?;
 
+    // Api key validation.
     if key.len() != 32 || !regex.is_match(&key) {
         println!("Please enter a valid key!");
     } else {
-        let new_api_setting = ApiSetting { key: key.as_str() };
+        let new_api_setting = ApiSetting { key };
 
         let api_json_string = serde_json::to_string(&new_api_setting)?;
         File::create(format!(
@@ -34,7 +35,8 @@ pub fn setup_api(key: String) -> Result<()> {
     Ok(())
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+/// City data type. It's a part of the user setting file.
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
 pub struct City {
     pub name: String,
     pub lat: f64,
@@ -51,35 +53,37 @@ impl fmt::Display for City {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+/// Enum for units. It's a part of the user setting file.
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug, PartialEq)]
 pub enum Unit {
     Metric,
     Imperial,
 }
 impl fmt::Display for Unit {
+    /// Returns the unit name.
     fn fmt(&self, f: &mut std::fmt::Formatter) -> fmt::Result {
         match self {
-            Unit::Metric => write!(f, "Metric"),
-            Unit::Imperial => write!(f, "Imperial"),
+            Unit::Metric => write!(f, "metric"),
+            Unit::Imperial => write!(f, "imperial"),
         }
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+/// User setting data type.
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
 pub struct UserSetting {
     pub city: Option<City>,
     pub unit: Option<Unit>,
     pub display_emoji: Option<bool>,
 }
 
+/// Update user settings.
 pub fn update_setting(setting_args: &UserSetting) -> Result<()> {
     use crate::constants::SETTINGS_JSON_NAME;
 
-    let json_string = read_json_file(SETTINGS_JSON_NAME)?;
-    let mut json_data: UserSetting = serde_json::from_str(&json_string)
-        .context("The given 'UserSetting' JSON input may be invalid.")?;
+    let mut json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME)?;
 
-    // Update the setting file with the given arguments.
+    // Update the setting file with given arguments.
     // 1. City
     {
         let mut using_city: Option<City> = None;
