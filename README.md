@@ -50,7 +50,7 @@ Do you want to display emoji? (y/n)
 n
 
 San Jose is now your city!
-We'll use Imperial for you.
+I'll use imperial for you.
 ```
 
 2. Weather Check
@@ -58,5 +58,12 @@ We'll use Imperial for you.
 ```
 $ weather-cli check                          
 San Jose (US)
-58.62℉ / Clouds (broken clouds)
+54.52° / Clear (clear sky)
+H: 58.14°, L: 48.67°
+
+- Wind Speed: 21 mph,
+- Humidity: 82 %,
+- Pressure: 1016 hPa
+- Sunrise: 11:02 AM
+  (Sunrise: 10:56 PM)
 ```
