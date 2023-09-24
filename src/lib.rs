@@ -18,6 +18,10 @@ pub mod program_info {
     pub const PROGRAM_DESCRIPTION: &str = "Weather for command-line fans!";
     /// The authors of the program.
     pub const PROGRAM_AUTHORS: &str = "decaplanet";
+    /// URL of the program in crates.io.
+    pub const CRATES_IO_URL: &str = "https://crates.io/crates/weather-cli";
+    /// URL of the program repository in GitHub.
+    pub const REPOSITORY_URL: &str = "https://github.com/decaplanet/weather-cli";
 }
 
 /// Constants related to the API and settings.

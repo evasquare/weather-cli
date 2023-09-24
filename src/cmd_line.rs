@@ -3,7 +3,9 @@ use clap::Parser;
 use crate::{
     api_usage::{check, search_city},
     get_executable_directory,
-    program_info::{PROGRAM_AUTHORS, PROGRAM_DESCRIPTION, PROGRAM_NAME},
+    program_info::{
+        CRATES_IO_URL, PROGRAM_AUTHORS, PROGRAM_DESCRIPTION, PROGRAM_NAME, REPOSITORY_URL,
+    },
     user_setup::setup_api,
 };
 
@@ -21,24 +23,25 @@ struct Cli {
 
 #[derive(clap::Subcommand)]
 enum Commands {
-    /// Check weather information in your city.
+    /// Check weather information in your city
     Check {},
 
-    /// Search and set your city.
+    /// Search and set your city
     SetLocation {
         /// A search query.
         #[arg(short, long)]
         query: String,
     },
 
-    /// Setup the OpenWeather API Key.
+    /// Setup the OpenWeather API Key
+    /// (https://openweathermap.org)
     SetupApi {
         /// API key from OpenWeather.
         #[arg(short, long)]
         key: String,
     },
 
-    /// View information about the program.
+    /// View information about the program
     About {},
 }
 
@@ -77,15 +80,17 @@ pub async fn init() {
                 }
             }
 
-            println!("# {}:", PROGRAM_NAME);
+            println!("# {}", PROGRAM_NAME);
             println!("{}\n", PROGRAM_DESCRIPTION);
             println!("Developed by: {}", authors);
+            println!("- Crates.io: {}", CRATES_IO_URL);
+            println!("- Github: {}", REPOSITORY_URL);
         }
         None => {
             println!("Please use \"weather-cli help\" command for help.");
 
             let executable_directory = get_executable_directory().unwrap();
-            println!("Program Executable Directory: {}", executable_directory);
+            println!("- Program Executable Directory: {}", executable_directory);
         }
     }
 }
