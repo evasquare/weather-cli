@@ -18,9 +18,12 @@ pub struct WeatherApiResponse {
     pub sys: Sys,
     pub timezone: i32,
     pub cod: u32,
-    // Properties below are deprecated.
-    // // id: u32,
-    // // name: String,
+    ///  Please note that built-in geocoder functionality has been deprecated. (https://openweathermap.org/current#builtin)
+    #[allow(dead_code)]
+    id: u32,
+    ///  Please note that built-in geocoder functionality has been deprecated. (https://openweathermap.org/current#builtin)
+    #[allow(dead_code)]
+    name: String,
 }
 
 #[derive(Deserialize)]
