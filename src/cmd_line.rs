@@ -14,9 +14,6 @@ const ABOUT: &str = "# weather-cli : Weather for command-line fans!";
 #[derive(clap::Parser)]
 #[command(author, version, about = ABOUT, long_about = None)]
 struct Cli {
-    /// Optional name to operate on.
-    name: Option<String>,
-
     #[command(subcommand)]
     command: Option<Commands>,
 }
