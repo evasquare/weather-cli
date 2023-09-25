@@ -62,10 +62,10 @@ pub enum Unit {
 impl fmt::Display for Unit {
     /// Returns the unit name.
     fn fmt(&self, f: &mut std::fmt::Formatter) -> fmt::Result {
-        match self {
-            Unit::Metric => write!(f, "metric"),
-            Unit::Imperial => write!(f, "imperial"),
-        }
+        f.write_str(match self {
+            Unit::Metric => "metric",
+            Unit::Imperial => "imperial",
+        })
     }
 }
 
