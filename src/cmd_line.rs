@@ -3,9 +3,6 @@ use clap::Parser;
 use crate::{
     api_usage::{check, search_city},
     get_executable_directory,
-    program_info::{
-        CRATES_IO_URL, PROGRAM_AUTHORS, PROGRAM_DESCRIPTION, PROGRAM_NAME, REPOSITORY_URL,
-    },
     user_setup::setup_api,
 };
 
@@ -66,6 +63,10 @@ pub async fn init() {
             });
         }
         Some(Commands::About {}) => {
+            use crate::program_info::{
+                CRATES_IO_URL, PROGRAM_AUTHORS, PROGRAM_DESCRIPTION, PROGRAM_NAME, REPOSITORY_URL,
+            };
+
             let splitted_author_list: Vec<&str> = PROGRAM_AUTHORS.split(',').collect();
 
             let mut authors = String::new();

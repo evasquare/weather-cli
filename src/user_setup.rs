@@ -1,5 +1,6 @@
-use crate::{get_executable_directory, read_json_file};
 use anyhow::{Context, Result};
+
+use crate::{get_executable_directory, read_json_file};
 use core::fmt;
 use regex::Regex;
 use std::{fs::File, io::Write};

@@ -1,11 +1,12 @@
+use anyhow::{anyhow, Context, Result};
+
 use crate::api_usage::response_types::WeatherApiResponse;
 use crate::{
     constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME},
-    read_json_file,
+    read_json_file, read_json_response,
     user_setup::{update_setting, ApiSetting, City, Unit, UserSetting},
+    ErrorMessageType,
 };
-use crate::{read_json_response, ErrorMessageType};
-use anyhow::{anyhow, Context, Result};
 use chrono::{DateTime, FixedOffset, TimeZone, Utc};
 
 mod response_types;
