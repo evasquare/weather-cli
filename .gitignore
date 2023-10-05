@@ -17,5 +17,7 @@ Cargo.lock
 .vscode
 .env
 .DS_Store
-api.json
-settings.json
+
+# Setting Files
+weather-cli-api.json
+weather-cli-settings.json
