@@ -211,6 +211,7 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
 
 /// Retrieves cities with the search query and saves the selected city.
 pub async fn search_city(query: &String) -> Result<()> {
+    use crate::get_file_read_error_message;
     use serde_json::Value;
 
     let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME)?;
@@ -222,6 +223,14 @@ pub async fn search_city(query: &String) -> Result<()> {
     let response = reqwest::get(url).await?.text().await?;
     let data: Value =
         serde_json::from_str(&response).context("The given JSON input may be invalid.")?;
+
+    // Invalid API key error.
+    if let Some(401) = data["cod"].as_i64() {
+        return Err(anyhow!(get_file_read_error_message(
+            ErrorMessageType::InvalidApiKey,
+            None
+        )));
+    }
 
     let mut city_vec: Vec<City> = vec![];
 
