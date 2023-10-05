@@ -95,16 +95,21 @@ pub fn get_json_file(name: &str) -> Result<File> {
 pub enum ErrorMessageType {
     SettingRead,
     ApiResponseRead,
+    InvalidApiKey,
 }
 
-fn get_file_read_error_message(error_type: ErrorMessageType, context: &str) -> String {
-    match error_type {
-        ErrorMessageType::SettingRead => {
+fn get_file_read_error_message(error_type: ErrorMessageType, context: Option<&str>) -> String {
+    match (error_type, context) {
+        (ErrorMessageType::SettingRead, Some(context)) => {
             format!("Failed to read the following file: {}", context)
         }
-        ErrorMessageType::ApiResponseRead => {
+        (ErrorMessageType::ApiResponseRead, Some(context)) => {
             format!("The given '{}' JSON input may be invalid.", context)
         }
+        (ErrorMessageType::InvalidApiKey, None) => {
+            "API Key is invalid. Please try again.".to_string()
+        }
+        _ => unreachable!(),
     }
 }
 
@@ -117,7 +122,7 @@ pub fn read_json_file<T: serde::de::DeserializeOwned>(json_name: &str) -> Result
     file.read_to_string(&mut json_string)?;
 
     let api_key_data: T = serde_json::from_str(&json_string).context(
-        get_file_read_error_message(ErrorMessageType::SettingRead, API_JSON_NAME),
+        get_file_read_error_message(ErrorMessageType::SettingRead, Some(API_JSON_NAME)),
     )?;
 
     Ok(api_key_data)
@@ -129,9 +134,23 @@ pub fn read_json_response<T: serde::de::DeserializeOwned>(
     error_message_type: ErrorMessageType,
     error_context: &str,
 ) -> Result<T> {
+    use serde_json::Value;
+
+    let api_response: Value = serde_json::from_str(response).context(
+        get_file_read_error_message(ErrorMessageType::ApiResponseRead, Some(error_context)),
+    )?;
+
+    // Invalid API key error.
+    if let Some(401) = api_response["cod"].as_i64() {
+        return Err(anyhow!(get_file_read_error_message(
+            ErrorMessageType::InvalidApiKey,
+            None
+        )));
+    }
+
     let response_data: T = serde_json::from_str(response).context(get_file_read_error_message(
         error_message_type,
-        error_context,
+        Some(error_context),
     ))?;
 
     Ok(response_data)
