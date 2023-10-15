@@ -1,5 +1,5 @@
 # weather-cli
-Use simple commands to check the weather in your city. Easily search your city and select it.
+Use simple commands to check the weather in your city. Easily search and select your city.
 
 
 ## Setup
