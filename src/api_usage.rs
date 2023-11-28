@@ -1,17 +1,16 @@
 use anyhow::{anyhow, Context, Result};
 
 use crate::api_usage::response_types::WeatherApiResponse;
+use crate::constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME};
+use crate::{read_json_file, read_json_response, user_setup::update_setting};
 use crate::{
-    constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME},
-    read_json_file, read_json_response,
-    user_setup::{update_setting, ApiSetting, City, Unit, UserSetting},
+    user_setup::{ApiSetting, City, Unit, UserSetting},
     ErrorMessageType,
 };
 use chrono::{DateTime, FixedOffset, TimeZone, Utc};
 
 mod response_types;
 
-/// DateTime wrapper for sunrise and sunset.
 enum EventInfo<T: TimeZone> {
     Sunrise(DateTime<T>),
     Sunset(DateTime<T>),
@@ -29,7 +28,7 @@ where
     }
 }
 
-/// Returns the sunrise and sunset time.
+/// Return the sunrise and sunset time.
 /// The first element in the returned array is the next upcoming event.
 fn get_local_event_info(
     sunrise_timestamp: i64,
@@ -56,14 +55,12 @@ fn get_local_event_info(
     }
 }
 
-/// Checks the weather information from the API.
+/// Check the weather information from the API.
 pub async fn check() -> Result<()> {
     use crate::get_emoji;
 
-    // Read API Key.
     let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME);
     let api_key = api_json_data?.key;
-    // Get properties from the setting file.
     let setting_json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME)?;
 
     let url = match (&setting_json_data.city, &setting_json_data.unit) {
@@ -97,7 +94,7 @@ pub async fn check() -> Result<()> {
         response_data.timezone,
     )?;
 
-    // Print output.
+    // Print the weather information.
     if let (Some(city), Some(selected_unit)) = (setting_json_data.city, &setting_json_data.unit) {
         let wind_unit = match selected_unit {
             Unit::Metric => "m/s",
@@ -135,7 +132,7 @@ pub async fn check() -> Result<()> {
     }
 }
 
-/// Prints each cities in the given slice.
+/// Print each cities in a given slice.
 fn show_cities(city_slice: &[City]) {
     println!("\nCity list:");
     for (index, city) in city_slice.iter().enumerate() {
@@ -143,7 +140,7 @@ fn show_cities(city_slice: &[City]) {
     }
 }
 
-/// Prompts the user to select a city and preferred unit.
+/// Prompt the user to select a city and preferred unit.
 fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
     use std::io;
 
@@ -193,7 +190,6 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
         _ => return Err(anyhow!("Invalid selection.")),
     };
 
-    // Update the setting.
     let user_setting = UserSetting {
         city: Some(City {
             name: city.name.clone(),
@@ -209,7 +205,7 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
     Ok((city.name.as_str(), selected_unit))
 }
 
-/// Retrieves cities with the search query and saves the selected city.
+/// Retrieve cities with the search query and saves the selected city.
 pub async fn search_city(query: &String) -> Result<()> {
     use crate::get_file_read_error_message;
     use serde_json::Value;

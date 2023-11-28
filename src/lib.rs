@@ -10,7 +10,10 @@ pub mod api_usage;
 pub mod cmd_line;
 pub mod user_setup;
 
-/// Constants for the information of the program.
+#[cfg(test)]
+mod tests;
+
+/// Constants for the program information.
 pub mod program_info {
     /// The name of the program.
     pub const PROGRAM_NAME: &str = "weather-cli";
@@ -24,12 +27,12 @@ pub mod program_info {
     pub const REPOSITORY_URL: &str = "https://github.com/decaplanet/weather-cli";
 }
 
-/// Constants related to the API and settings.
+/// Constants for setting file names.
 mod constants {
-    /// The name of the json file for the API key.
+    /// The name of the JSON file for the API key.
     pub const API_JSON_NAME: &str = "api";
 
-    /// The name of the json file for settings.
+    /// The name of the JSON file for settings.
     pub const SETTINGS_JSON_NAME: &str = "settings";
 
     /// The URL template for the OpenWeatherMap API.
@@ -55,7 +58,7 @@ mod constants {
     pub const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
 }
 
-/// Returns the running executable directory.
+/// Return the executable directory.
 pub fn get_executable_directory() -> Result<String> {
     let executable_path =
         env::current_exe().context("Couldn't get the executable file directory!")?;
@@ -70,7 +73,7 @@ pub fn get_executable_directory() -> Result<String> {
     Err(anyhow!("Unable to get the executable directory."))
 }
 
-/// Formats the given file name with the executable directory.
+/// Edit or generate a setting file in the executable directory.
 pub fn get_json_file(name: &str) -> Result<File> {
     let executable_dir = get_executable_directory()?;
 
@@ -113,7 +116,7 @@ fn get_file_read_error_message(error_type: ErrorMessageType, context: Option<&st
     }
 }
 
-/// Reads the given json file and returns the string.
+/// Read a JSON file and return the string.
 pub fn read_json_file<T: serde::de::DeserializeOwned>(json_name: &str) -> Result<T> {
     use constants::API_JSON_NAME;
 
@@ -128,7 +131,7 @@ pub fn read_json_file<T: serde::de::DeserializeOwned>(json_name: &str) -> Result
     Ok(api_key_data)
 }
 
-/// Reads the given json file and returns the string.
+/// Read a JSON file and return the string.
 pub fn read_json_response<T: serde::de::DeserializeOwned>(
     response: &str,
     error_message_type: ErrorMessageType,
@@ -156,7 +159,7 @@ pub fn read_json_response<T: serde::de::DeserializeOwned>(
     Ok(response_data)
 }
 
-/// Returns the emoji for the given icon id.
+/// Returns the emoji for a given icon id.
 pub fn get_emoji(icon_id: &str) -> String {
     let return_value = match icon_id {
         "01d" => "☀️",
@@ -185,7 +188,3 @@ pub fn get_emoji(icon_id: &str) -> String {
         return_value.to_string()
     }
 }
-
-/// This module is only used for testing.
-#[cfg(test)]
-mod tests;

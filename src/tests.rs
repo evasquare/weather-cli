@@ -120,7 +120,7 @@ mod unit_test {
         println!("{:#?}", result);
         assert!(result.is_ok());
 
-        // Get json data from an existing setting file.
+        // Get JSON data from an existing setting file.
         let json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME).unwrap();
 
         assert_eq!(json_data.city.unwrap().name, String::from("London"));

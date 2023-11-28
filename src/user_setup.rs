@@ -11,7 +11,7 @@ pub struct ApiSetting {
     pub key: String,
 }
 
-/// Saves the given API key into the API setting file.
+/// Save an API key into the API setting file.
 pub fn setup_api(key: String) -> Result<()> {
     use crate::constants::API_JSON_NAME;
 
@@ -36,7 +36,7 @@ pub fn setup_api(key: String) -> Result<()> {
     Ok(())
 }
 
-/// City data type. It's a part of the user setting file.
+/// Type for the user setting file.
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
 pub struct City {
     pub name: String,
@@ -54,7 +54,7 @@ impl fmt::Display for City {
     }
 }
 
-/// Enum for units. It's a part of the user setting file.
+/// Type for the user setting file.
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, PartialEq)]
 pub enum Unit {
     Metric,
@@ -84,7 +84,6 @@ pub fn update_setting(setting_args: &UserSetting) -> Result<()> {
 
     let mut json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME)?;
 
-    // Update the setting file with given arguments.
     // 1. City
     {
         let mut using_city: Option<City> = None;
