@@ -3,9 +3,9 @@ name = "weather-cli"
 description = "Weather for command-line fans!"
 keywords = ["weather", "open-weather-api"]
 version = "0.3.4"
-authors = ["decaplanet <contact@decaplanet.com>"]
+authors = ["Echo"]
 license = "MIT"
-repository = "https://github.com/decaplanet/weather-cli"
+repository = "https://github.com/polyecho/weather-cli"
 edition = "2021"
 exclude = ["tests/**/*", "*_tests.rs"]
 
