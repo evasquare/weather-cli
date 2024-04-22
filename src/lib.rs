@@ -20,11 +20,11 @@ pub mod program_info {
     /// The description of the program.
     pub const PROGRAM_DESCRIPTION: &str = "Weather for command-line fans!";
     /// The authors of the program.
-    pub const PROGRAM_AUTHORS: &str = "Echo";
+    pub const PROGRAM_AUTHORS: &str = "Stellar";
     /// URL of the program in crates.io.
     pub const CRATES_IO_URL: &str = "https://crates.io/crates/weather-cli";
     /// URL of the program repository in GitHub.
-    pub const REPOSITORY_URL: &str = "https://github.com/polyecho/weather-cli";
+    pub const REPOSITORY_URL: &str = "https://github.com/cosmostellar/weather-cli";
 }
 
 /// Constants for setting file names.
