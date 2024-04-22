@@ -81,8 +81,8 @@ pub struct Clouds {
 #[derive(serde::Deserialize)]
 pub struct Sys {
     #[serde(rename = "type")]
-    pub type_: u32,
-    pub id: u32,
+    pub type_: Option<u32>,
+    pub id: Option<u32>,
     pub message: Option<String>,
     pub country: String,
     pub sunrise: u32,
