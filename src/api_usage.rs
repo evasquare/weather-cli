@@ -57,8 +57,8 @@ fn convert_utc_to_local_time(
 pub async fn get_weather_information() -> Result<()> {
     use crate::constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME};
     use crate::{
-        api_usage::response_types::WeatherApiResponse, get_emoji, read_json_file,
-        read_json_response, user_setup::structs::ApiSetting,
+        api_usage::response_types::WeatherApiResponse, read_json_file, read_json_response,
+        user_setup::structs::ApiSetting,
     };
 
     let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME);
@@ -89,12 +89,6 @@ pub async fn get_weather_information() -> Result<()> {
         "WeatherApiResponse",
     )?;
 
-    let emoji = match setting_json_data.display_emoji {
-        Some(true) => get_emoji(response_data.weather[0].icon.as_str()),
-        Some(false) => String::new(),
-        _ => unreachable!(),
-    };
-
     let upcoming_event = convert_utc_to_local_time(
         response_data.sys.sunrise as i64,
         response_data.sys.sunset as i64,
@@ -123,13 +117,14 @@ pub async fn get_weather_information() -> Result<()> {
           ```
            */
         println!("{} ({})", city.name, city.country);
+
         println!(
-            "{temp}° / {emoji}{main} ({description})",
+            "{temp}° / {main} ({description})",
             temp = response_data.main.temp,
-            emoji = emoji,
             main = response_data.weather[0].main,
             description = response_data.weather[0].description
         );
+
         println!(
             "H: {max}°, L: {min}°",
             max = response_data.main.temp_max,
@@ -204,21 +199,6 @@ fn city_select(cities: &[City]) -> Result<(&str, Unit)> {
         _ => return Err(anyhow!("Input out of range!")),
     };
 
-    // Select emoji preference
-    let mut emoji_option: String = String::new();
-    println!("\nDo you want to display emoji? (y/n)");
-
-    io::stdin().read_line(&mut emoji_option)?;
-    let emoji_option: &str = emoji_option.trim();
-    if emoji_option != "y" && emoji_option != "Y" && emoji_option != "n" && emoji_option != "N" {
-        return Err(anyhow!("Invalid selection."));
-    }
-    let emoji_option = match emoji_option {
-        "y" | "Y" => true,
-        "n" | "N" => false,
-        _ => return Err(anyhow!("Invalid selection.")),
-    };
-
     let user_setting = UserSettings {
         city: Some(City {
             name: city.name.clone(),
@@ -227,7 +207,6 @@ fn city_select(cities: &[City]) -> Result<(&str, Unit)> {
             country: city.country.clone(),
         }),
         unit: Some(selected_unit.clone()),
-        display_emoji: Some(emoji_option),
     };
     update_user_settings(&user_setting)?;
 

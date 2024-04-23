@@ -4,7 +4,6 @@ use core::fmt;
 pub struct UserSettings {
     pub city: Option<City>,
     pub unit: Option<Unit>,
-    pub display_emoji: Option<bool>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]

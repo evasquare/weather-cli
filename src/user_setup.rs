@@ -61,10 +61,6 @@ pub fn update_user_settings(setting_args: &UserSettings) -> Result<()> {
     if let Some(unit) = &setting_args.unit {
         json_data.unit = Some(unit.clone());
     }
-    // 3. Emoji
-    if let Some(display_emoji) = &setting_args.display_emoji {
-        json_data.display_emoji = Some(*display_emoji);
-    }
 
     let json_string = serde_json::to_string(&json_data)?;
 
