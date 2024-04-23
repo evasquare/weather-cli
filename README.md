@@ -47,9 +47,6 @@ Do you use Celsius or Fahrenheit?
 2) Fahrenheit
 2
 
-Do you want to display emoji? (y/n)
-n
-
 San Jose is now your city!
 I'll use imperial for you.
 ```
@@ -59,12 +56,12 @@ I'll use imperial for you.
 ```
 $ weather-cli check                          
 San Jose (US)
-64.69° / Clouds (scattered clouds)
-H: 69.53°, L: 58.71°
+49.33° / Clear (clear sky)
+H: 49.33°, L: 49.33°
 
-- Wind Speed: 3.44 mph,
-- Humidity: 69 %,
-- Pressure: 1018 hPa
-- Sunset: 07:02 PM
-  (Sunrise: 06:56 AM)
+- Wind Speed: 6.08 mph,
+- Humidity: 92 %,
+- Pressure: 1013 hPa
+- Sunrise: 06:21 AM
+  (Sunset: 07:49 PM)
 ```
