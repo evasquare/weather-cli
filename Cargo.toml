@@ -1,6 +1,6 @@
 [package]
 name = "weather-cli"
-description = "Weather for command-line fans!"
+description = "Minimalistic command-line weather program."
 keywords = ["weather", "open-weather-api"]
 version = "0.3.6"
 authors = ["Stellar"]
