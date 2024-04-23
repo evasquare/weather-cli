@@ -1,6 +1,6 @@
-use weather_cli::cmd_line;
+use weather_cli::cli;
 
 #[tokio::main]
 async fn main() {
-    cmd_line::init().await;
+    cli::init().await;
 }

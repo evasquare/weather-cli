@@ -2,7 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use chrono::{DateTime, FixedOffset, TimeZone, Utc};
 
 use crate::{
-    user_setup::{ApiSetting, City, Unit, UserSettings},
+    user_setup::structs::{City, Unit, UserSettings},
     ErrorMessageType,
 };
 
@@ -55,10 +55,11 @@ fn convert_utc_to_local_time(
 
 /// Gets the weather information from the API.
 pub async fn get_weather_information() -> Result<()> {
-    use crate::api_usage::response_types::WeatherApiResponse;
     use crate::constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME};
-    use crate::get_emoji;
-    use crate::{read_json_file, read_json_response};
+    use crate::{
+        api_usage::response_types::WeatherApiResponse, get_emoji, read_json_file,
+        read_json_response, user_setup::structs::ApiSetting,
+    };
 
     let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME);
     let api_key = api_json_data?.key;
@@ -193,7 +194,7 @@ fn city_select(cities: &[City]) -> Result<(&str, Unit)> {
     let selected_unit: usize = selected_unit
         .trim()
         .parse()
-        .context("Couldn't parse the input. The input may be invalid usize value. Please make sure it's at least 0.")?;
+        .context("Failed to parse the input. The input may be invalid usize value. Please make sure it's at least 0.")?;
     if !(1..=2).contains(&selected_unit) {
         return Err(anyhow!("Invalid unit selection."));
     }
@@ -239,6 +240,7 @@ pub async fn search_city(query: &String) -> Result<()> {
     use crate::constants::API_JSON_NAME;
     use crate::get_file_read_error_message;
     use crate::read_json_file;
+    use crate::user_setup::structs::ApiSetting;
     use serde_json::Value;
 
     let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME)?;

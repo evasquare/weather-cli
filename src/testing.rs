@@ -100,7 +100,10 @@ mod unit_test {
         use crate::{
             constants::SETTINGS_JSON_NAME,
             read_json_file,
-            user_setup::{update_user_settings, City, Unit, UserSettings},
+            user_setup::{
+                structs::{City, Unit, UserSettings},
+                update_user_settings,
+            },
         };
 
         let option_setting_args = UserSettings {

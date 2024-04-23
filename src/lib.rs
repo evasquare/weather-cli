@@ -7,11 +7,11 @@ use std::{
 };
 
 pub mod api_usage;
-pub mod cmd_line;
+pub mod cli;
 pub mod user_setup;
 
 #[cfg(test)]
-mod tests;
+mod testing;
 
 /// Constants for program information.
 pub mod program_info {
@@ -61,10 +61,10 @@ mod constants {
 /// Returns the executable directory.
 pub fn get_executable_directory() -> Result<String> {
     let executable_path =
-        env::current_exe().context("Couldn't get the executable file directory!")?;
+        env::current_exe().context("Failed to get the executable file directory!")?;
     let executable_directory = executable_path
         .parent()
-        .context("Couldn't get the executable directory!")?;
+        .context("Failed to get the executable directory!")?;
 
     if let Some(dir_str) = executable_directory.to_str() {
         return Ok(dir_str.to_string());
@@ -82,13 +82,13 @@ pub fn get_json_file(name: &str) -> Result<File> {
         Err(_) => {
             let mut new_file =
                 File::create(format!("{}/weather-cli-{}.json", executable_dir, name))
-                    .context("Couldn't create a json file.")?;
+                    .context("Failed to create a json file.")?;
             new_file
                 .write_all("{}".as_bytes())
-                .context("Couldn't create a json file.")?;
+                .context("Failed to create a json file.")?;
 
             File::open(format!("{}/weather-cli-{}.json", executable_dir, name))
-                .context("Couldn't get the json file.")?
+                .context("Failed to get the json file.")?
         }
     };
 
