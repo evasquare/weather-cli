@@ -100,10 +100,10 @@ mod unit_test {
         use crate::{
             constants::SETTINGS_JSON_NAME,
             read_json_file,
-            user_setup::{update_setting, City, Unit, UserSetting},
+            user_setup::{update_user_settings, City, Unit, UserSettings},
         };
 
-        let option_setting_args = UserSetting {
+        let option_setting_args = UserSettings {
             city: Some(City {
                 name: String::from("London"),
                 lat: 51.5074,
@@ -116,12 +116,12 @@ mod unit_test {
 
         println!("{:#?}", option_setting_args);
 
-        let result = update_setting(&option_setting_args);
+        let result = update_user_settings(&option_setting_args);
         println!("{:#?}", result);
         assert!(result.is_ok());
 
         // Get JSON data from an existing setting file.
-        let json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME).unwrap();
+        let json_data = read_json_file::<UserSettings>(SETTINGS_JSON_NAME).unwrap();
 
         assert_eq!(json_data.city.unwrap().name, String::from("London"));
         assert_eq!(json_data.unit.unwrap(), Unit::Imperial);

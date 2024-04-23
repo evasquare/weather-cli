@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use crate::{
-    api_usage::{check, search_city},
+    api_usage::{get_weather_information, search_city},
     get_executable_directory,
     user_setup::setup_api,
 };
@@ -45,7 +45,7 @@ pub async fn init() {
 
     match &cli.command {
         Some(Commands::Check {}) => {
-            match check().await {
+            match get_weather_information().await {
                 Ok(()) => {}
                 Err(e) => {
                     println!("ERROR: {}", e);

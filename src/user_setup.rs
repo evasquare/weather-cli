@@ -1,19 +1,18 @@
 use anyhow::{Context, Result};
 
-use crate::{get_executable_directory, read_json_file};
 use core::fmt;
-use regex::Regex;
-use std::{fs::File, io::Write};
 
-/// Data type for the API setting file.
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
 pub struct ApiSetting {
     pub key: String,
 }
 
-/// Save an API key into the API setting file.
+/// Saves an API key into the API setting file.
 pub fn setup_api(key: String) -> Result<()> {
     use crate::constants::API_JSON_NAME;
+    use crate::get_executable_directory;
+    use regex::Regex;
+    use std::{fs::File, io::Write};
 
     let executable_dir = get_executable_directory()?;
     let regex = Regex::new(r"^[a-zA-Z0-9]+$")?;
@@ -36,7 +35,6 @@ pub fn setup_api(key: String) -> Result<()> {
     Ok(())
 }
 
-/// Type for the user setting file.
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
 pub struct City {
     pub name: String,
@@ -44,6 +42,7 @@ pub struct City {
     pub lon: f64,
     pub country: String,
 }
+
 impl fmt::Display for City {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> fmt::Result {
         let output = format!(
@@ -54,12 +53,12 @@ impl fmt::Display for City {
     }
 }
 
-/// Type for the user setting file.
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, PartialEq)]
 pub enum Unit {
     Metric,
     Imperial,
 }
+
 impl fmt::Display for Unit {
     /// Returns the unit name.
     fn fmt(&self, f: &mut std::fmt::Formatter) -> fmt::Result {
@@ -70,19 +69,20 @@ impl fmt::Display for Unit {
     }
 }
 
-/// User setting data type.
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
-pub struct UserSetting {
+pub struct UserSettings {
     pub city: Option<City>,
     pub unit: Option<Unit>,
     pub display_emoji: Option<bool>,
 }
 
-/// Update user settings.
-pub fn update_setting(setting_args: &UserSetting) -> Result<()> {
+/// Updates the user setting file.
+pub fn update_user_settings(setting_args: &UserSettings) -> Result<()> {
     use crate::constants::SETTINGS_JSON_NAME;
+    use crate::{get_executable_directory, read_json_file};
+    use std::{fs::File, io::Write};
 
-    let mut json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME)?;
+    let mut json_data = read_json_file::<UserSettings>(SETTINGS_JSON_NAME)?;
 
     // 1. City
     {
@@ -115,7 +115,7 @@ pub fn update_setting(setting_args: &UserSetting) -> Result<()> {
         executable_dir, SETTINGS_JSON_NAME
     ))?
     .write_all(json_string.as_bytes())
-    .context("Couldn't write JSON file.")?;
+    .context("Couldn't write the JSON file.")?;
 
     Ok(())
 }

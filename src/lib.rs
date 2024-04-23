@@ -13,31 +13,31 @@ pub mod user_setup;
 #[cfg(test)]
 mod tests;
 
-/// Constants for the program information.
+/// Constants for program information.
 pub mod program_info {
-    /// The name of the program.
+    /// Name of the program.
     pub const PROGRAM_NAME: &str = "weather-cli";
-    /// The description of the program.
+    /// Description of the program.
     pub const PROGRAM_DESCRIPTION: &str = "Weather for command-line fans!";
-    /// The authors of the program.
+    /// Author name of the program.
     pub const PROGRAM_AUTHORS: &str = "Stellar";
-    /// URL of the program in crates.io.
+    /// URL of the program on crates.io.
     pub const CRATES_IO_URL: &str = "https://crates.io/crates/weather-cli";
-    /// URL of the program repository in GitHub.
+    /// URL of the program repository.
     pub const REPOSITORY_URL: &str = "https://github.com/cosmostellar/weather-cli";
 }
 
-/// Constants for setting file names.
+/// Constants for setting files.
 mod constants {
-    /// The name of the JSON file for the API key.
+    /// Name of the JSON file. It stores an API key.
     pub const API_JSON_NAME: &str = "api";
 
-    /// The name of the JSON file for settings.
+    /// Name of the setting JSON file.
     pub const SETTINGS_JSON_NAME: &str = "settings";
 
     /// The URL template for the OpenWeatherMap API.
     ///
-    /// This template can be used to retrieve weather data by replacing the following placeholders:
+    /// This template can be used to retrieve weather data by replacing following placeholders:
     ///
     /// - `{lat_value}`: Latitude value of the location.
     /// - `{lon_value}`: Longitude value of the location.
@@ -58,7 +58,7 @@ mod constants {
     pub const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
 }
 
-/// Return the executable directory.
+/// Returns the executable directory.
 pub fn get_executable_directory() -> Result<String> {
     let executable_path =
         env::current_exe().context("Couldn't get the executable file directory!")?;
@@ -73,7 +73,7 @@ pub fn get_executable_directory() -> Result<String> {
     Err(anyhow!("Unable to get the executable directory."))
 }
 
-/// Edit or generate a setting file in the executable directory.
+/// Edits or generates a setting file in the executable directory.
 pub fn get_json_file(name: &str) -> Result<File> {
     let executable_dir = get_executable_directory()?;
 

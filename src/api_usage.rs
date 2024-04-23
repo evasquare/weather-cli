@@ -1,13 +1,10 @@
 use anyhow::{anyhow, Context, Result};
+use chrono::{DateTime, FixedOffset, TimeZone, Utc};
 
-use crate::api_usage::response_types::WeatherApiResponse;
-use crate::constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME};
-use crate::{read_json_file, read_json_response, user_setup::update_setting};
 use crate::{
-    user_setup::{ApiSetting, City, Unit, UserSetting},
+    user_setup::{ApiSetting, City, Unit, UserSettings},
     ErrorMessageType,
 };
-use chrono::{DateTime, FixedOffset, TimeZone, Utc};
 
 mod response_types;
 
@@ -28,14 +25,15 @@ where
     }
 }
 
-/// Return the sunrise and sunset time.
-/// The first element in the returned array is the next upcoming event.
-fn get_local_event_info(
+/// Returns sunrise and sunset time.
+/// The first element in the returning array should be upcoming one.
+/// ex) It shows sunset time before sunrise time in the afternoon.
+fn convert_utc_to_local_time(
     sunrise_timestamp: i64,
     sunset_timestamp: i64,
     timezone: i32,
 ) -> Result<(EventInfo<FixedOffset>, EventInfo<FixedOffset>)> {
-    let timezone = FixedOffset::east_opt(timezone).context("Failed to read timezone.")?;
+    let timezone = FixedOffset::east_opt(timezone).context("Failed to read timezone value.")?;
 
     let current_time = Utc::now().with_timezone(&timezone);
     let sunrise = DateTime::<Utc>::from_timestamp(sunrise_timestamp, 0)
@@ -55,24 +53,32 @@ fn get_local_event_info(
     }
 }
 
-/// Check the weather information from the API.
-pub async fn check() -> Result<()> {
+/// Gets the weather information from the API.
+pub async fn get_weather_information() -> Result<()> {
+    use crate::api_usage::response_types::WeatherApiResponse;
+    use crate::constants::{API_JSON_NAME, API_URL, SETTINGS_JSON_NAME};
     use crate::get_emoji;
+    use crate::{read_json_file, read_json_response};
 
     let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME);
     let api_key = api_json_data?.key;
-    let setting_json_data = read_json_file::<UserSetting>(SETTINGS_JSON_NAME)?;
+    let setting_json_data = read_json_file::<UserSettings>(SETTINGS_JSON_NAME)?;
 
     let url = match (&setting_json_data.city, &setting_json_data.unit) {
         (Some(city), Some(unit)) => {
             let unit_str = unit.to_string();
 
             API_URL
-            .replace("{lat_value}", &city.lat.to_string())
-            .replace("{lon_value}", &city.lon.to_string())
-            .replace("{api_key}", &api_key)
-            .replace("{unit}", &unit_str)},
-        _ => return Err(anyhow!("Failed to read the setting! Please run 'set-location' command to set your city and preferred unit.")),
+                .replace("{lat_value}", &city.lat.to_string())
+                .replace("{lon_value}", &city.lon.to_string())
+                .replace("{api_key}", &api_key)
+                .replace("{unit}", &unit_str)
+        }
+        _ => {
+            return Err(anyhow!(
+            "Failed to read the setting! Please run 'set-location' command to configure settings."
+        ))
+        }
     };
 
     let response = reqwest::get(url).await?.text().await?;
@@ -88,7 +94,7 @@ pub async fn check() -> Result<()> {
         _ => unreachable!(),
     };
 
-    let upcoming_event = get_local_event_info(
+    let upcoming_event = convert_utc_to_local_time(
         response_data.sys.sunrise as i64,
         response_data.sys.sunset as i64,
         response_data.timezone,
@@ -101,8 +107,21 @@ pub async fn check() -> Result<()> {
             Unit::Imperial => "mph",
         };
 
-        println!("{} ({})", city.name, city.country);
+        /*
+        Example Output:
+        ```
+        Toronto (CA)
+        9.57° / Clouds (overcast clouds)
+        H: 9.57°, L: 9.57°
 
+        - Wind Speed: 4.59 m/s,
+        - Humidity: 61 %,
+        - Pressure: 1017 hPa
+        - Sunrise: 06:22 AM
+          (Sunset: 08:09 PM)
+          ```
+           */
+        println!("{} ({})", city.name, city.country);
         println!(
             "{temp}° / {emoji}{main} ({description})",
             temp = response_data.main.temp,
@@ -115,49 +134,58 @@ pub async fn check() -> Result<()> {
             max = response_data.main.temp_max,
             min = response_data.main.temp_min
         );
-
         println!(
             "\n- Wind Speed: {speed} {wind_speed_unit},",
             speed = response_data.wind.speed,
             wind_speed_unit = wind_unit
         );
-        println!("- Humidity: {} %,", response_data.main.humidity);
-        println!("- Pressure: {} hPa", response_data.main.pressure);
+        println!(
+            "- Humidity: {humidity} %,",
+            humidity = response_data.main.humidity
+        );
+        println!(
+            "- Pressure: {pressure} hPa",
+            pressure = response_data.main.pressure
+        );
         println!("- {}", upcoming_event.0);
         println!("  ({})", upcoming_event.1);
 
         Ok(())
     } else {
-        Err(anyhow!("Couldn't find city!"))
+        Err(anyhow!("There is no city matching the given query!"))
     }
 }
 
-/// Print each cities in a given slice.
+/// Prints cities in the given slice.
 fn show_cities(city_slice: &[City]) {
     println!("\nCity list:");
+
     for (index, city) in city_slice.iter().enumerate() {
         println!("{}) {}", index + 1, city);
     }
 }
 
-/// Prompt the user to select a city and preferred unit.
-fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
+/// Prompts the user to select a city and their preferred unit.
+fn city_select(cities: &[City]) -> Result<(&str, Unit)> {
+    use crate::user_setup::update_user_settings;
     use std::io;
 
     // Select city
     let mut selected_city: String = String::new();
-    println!("\nPlease select your city.");
+    println!();
+    println!("Please select your city.");
 
     io::stdin().read_line(&mut selected_city)?;
     let selected_city: usize = selected_city.trim().parse()?;
-    if selected_city > city_vec.len() {
+    if selected_city > cities.len() {
         return Err(anyhow!("Invalid city index."));
     }
-    let city = &city_vec[selected_city - 1];
+    let city = &cities[selected_city - 1];
 
-    // Select unit.
+    // Select unit
     let mut selected_unit: String = String::new();
-    println!("\nDo you use Celsius or Fahrenheit?");
+    println!();
+    println!("Do you use Celsius or Fahrenheit?");
     println!("1) Celsius");
     println!("2) Fahrenheit");
 
@@ -165,7 +193,7 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
     let selected_unit: usize = selected_unit
         .trim()
         .parse()
-        .context("Couldn't parse the input. The input may be invalid usize value.")?;
+        .context("Couldn't parse the input. The input may be invalid usize value. Please make sure it's at least 0.")?;
     if !(1..=2).contains(&selected_unit) {
         return Err(anyhow!("Invalid unit selection."));
     }
@@ -175,7 +203,7 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
         _ => return Err(anyhow!("Input out of range!")),
     };
 
-    // Select emoji option
+    // Select emoji preference
     let mut emoji_option: String = String::new();
     println!("\nDo you want to display emoji? (y/n)");
 
@@ -190,7 +218,7 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
         _ => return Err(anyhow!("Invalid selection.")),
     };
 
-    let user_setting = UserSetting {
+    let user_setting = UserSettings {
         city: Some(City {
             name: city.name.clone(),
             lat: city.lat,
@@ -200,14 +228,17 @@ fn city_select(city_vec: &[City]) -> Result<(&str, Unit)> {
         unit: Some(selected_unit.clone()),
         display_emoji: Some(emoji_option),
     };
-    update_setting(&user_setting)?;
+    update_user_settings(&user_setting)?;
 
     Ok((city.name.as_str(), selected_unit))
 }
 
-/// Retrieve cities with the search query and saves the selected city.
+/// Retrieves cities with the search query and saves
+/// the selected city in the setting file.
 pub async fn search_city(query: &String) -> Result<()> {
+    use crate::constants::API_JSON_NAME;
     use crate::get_file_read_error_message;
+    use crate::read_json_file;
     use serde_json::Value;
 
     let api_json_data = read_json_file::<ApiSetting>(API_JSON_NAME)?;
@@ -228,26 +259,26 @@ pub async fn search_city(query: &String) -> Result<()> {
         )));
     }
 
-    let mut city_vec: Vec<City> = vec![];
+    let mut cities: Vec<City> = vec![];
 
     for city in data.as_array().unwrap() {
-        city_vec.push(City {
+        cities.push(City {
             name: city["name"].as_str().unwrap().to_string(),
             lat: city["lat"].as_f64().unwrap(),
             lon: city["lon"].as_f64().unwrap(),
             country: city["country"].as_str().unwrap().to_string(),
         });
     }
-    show_cities(&city_vec);
+    show_cities(&cities);
 
-    match city_select(&city_vec) {
+    match city_select(&cities) {
         Ok((city_name, unit_name)) => {
             println!("\n{} is now your city!", city_name);
             println!("I'll use {} for you.", unit_name);
         }
         Err(e) => {
             println!("ERROR: {}", e);
-            let error_msg = city_select(&city_vec);
+            let error_msg = city_select(&cities);
 
             if let Err(e) = error_msg {
                 println!("ERROR: {}. Exiting the program...", e);
