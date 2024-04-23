@@ -1,18 +1,20 @@
-# weather-cli
-Use simple commands to check the weather in your city. Simply search and select your city.
+<img src="./images/icon.png" alt="project-icon" width="64">
 
+# weather-cli
+Minimalistic command-line weather program. It works with OpenWeather API.
 
 ## Setup
 You can install the crate with `cargo install` command.
+
 ```bash
 cargo install weather-cli
 ```
+
 Once installed, create an API key on [OpenWeather](https://openweathermap.org). You need to register your key running the following command.
 
 ```bash
 weather-cli api-setup --key "EXAMPLE_KEY"
 ```
-
 
 ## Commands
 | command      | description                            |
@@ -26,7 +28,7 @@ weather-cli api-setup --key "EXAMPLE_KEY"
 
 ## Use Examples
 
-1. City Search
+1. Search city
 ```
 $ weather-cli set-location --query "San Jose"
 
@@ -52,7 +54,7 @@ San Jose is now your city!
 I'll use imperial for you.
 ```
 
-2. Weather Check
+2. Check weather
 
 ```
 $ weather-cli check                          
