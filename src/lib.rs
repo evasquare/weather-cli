@@ -10,9 +10,10 @@ pub mod api_usage;
 pub mod cli;
 pub mod user_setup;
 
-mod program_info;
 #[cfg(test)]
 mod testing;
+
+mod program_info;
 mod types;
 
 pub mod constants {

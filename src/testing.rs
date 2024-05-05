@@ -1,4 +1,3 @@
-#[cfg(test)]
 mod unit_test {
     #[test]
     fn test_get_executable_directory() {
