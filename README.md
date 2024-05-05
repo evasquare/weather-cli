@@ -10,7 +10,8 @@ You can install the crate with `cargo install` command.
 cargo install weather-cli
 ```
 
-Once installed, create an API key on [OpenWeather](https://openweathermap.org). You need to register your key running the following command.
+Once installed, create an API key on [OpenWeather](https://openweathermap.org).
+You need to register your key running the following command.
 
 ```bash
 weather-cli api-setup --key "EXAMPLE_KEY"
@@ -30,38 +31,40 @@ weather-cli api-setup --key "EXAMPLE_KEY"
 
 1. Search city
 ```
-$ weather-cli set-location --query "San Jose"
+$ weather-cli set-location --query "Toronto"
 
-City list:
-1) San Jose, US (lat: 37.3361663, lon: -121.890591)
-2) San José, CR (lat: 9.9325427, lon: -84.0795782)
-3) San Jose, PH (lat: 12.0612933, lon: 121.9565754)
-4) Sant Josep de sa Talaia, ES (lat: 38.9043608, lon: 1.3178098)
-5) San Jose, US (lat: 40.305598, lon: -89.6028829)
-
+* City list:
+1) Old Toronto, CA (lat: 43.6534817, lon: -79.3839347)
+2) Toronto, CA (lat: 43.6534817, lon: -79.3839347)
+3) Toronto, US (lat: 41.9048584, lon: -90.8640346)
+4) Toronto, US (lat: 37.7989253, lon: -95.9491562)
+5) Toronto, CA (lat: 46.4524682, lon: -63.3799629)
 Please select your city.
-1
-
-Do you use Celsius or Fahrenheit?
-1) Celsius
-2) Fahrenheit
 2
 
-San Jose is now your city!
-I'll use imperial for you.
+* Select your preferred unit.
+* MORE INFO: https://openweathermap.org/weather-data
+1) Standard
+2) Metric
+3) Imperial
+2
+
+Toronto is now your city!
+I'll use metric for you.
 ```
 
 2. Check weather
 
 ```
-$ weather-cli check                          
-San Jose (US)
-49.33° / Clear (clear sky)
-H: 49.33°, L: 49.33°
+$ weather-cli check
 
-- Wind Speed: 6.08 mph,
-- Humidity: 92 %,
-- Pressure: 1013 hPa
-- Sunrise: 06:21 AM
-  (Sunset: 07:49 PM)
+Toronto (CA)
+11.34° / Mist (mist)
+H: 13.06°, L: 9.89°
+
+- Wind Speed: 3.6 m/s,
+- Humidity: 93 %,
+- Pressure: 1014 hPa
+- Sunset: 08:24 PM
+  (Sunrise: 06:03 AM)
 ```
