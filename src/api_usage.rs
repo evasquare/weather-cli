@@ -99,7 +99,7 @@ pub async fn print_weather_information() -> Result<()> {
         }
         _ => {
             return Err(anyhow!(
-            "Failed to read the setting! Please run 'set-location' command to configure settings."
+            "Failed to read user setting! Please run 'set-location' command to configure settings."
         ))
         }
     };
@@ -147,6 +147,7 @@ pub async fn print_weather_information() -> Result<()> {
         };
 
         let output_messages = [
+            String::new(),
             format!("{} ({})", selected_city.name, selected_city.country),
             format!(
                 "{temp}° / {main} ({description})",
