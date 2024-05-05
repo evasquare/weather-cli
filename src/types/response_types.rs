@@ -5,25 +5,25 @@
 pub struct WeatherApiResponse {
     pub coord: Coord,
     pub weather: Vec<Weather>,
-    pub base: String,
+    pub base: Option<String>,
     pub main: Main,
-    pub visibility: u32,
+    pub visibility: Option<u32>,
     pub wind: Wind,
     pub rain: Option<Rain>,
     pub snow: Option<Snow>,
     pub clouds: Clouds,
-    pub dt: u32,
+    pub dt: Option<u32>,
     pub sys: Sys,
     pub timezone: i32,
-    pub cod: u32,
+    pub cod: Option<u32>,
     /// Please note that built-in geocoder functionality has been deprecated.
     /// (https://openweathermap.org/current#builtin)
     #[allow(dead_code)]
-    id: u32,
+    id: Option<u32>,
     /// Please note that built-in geocoder functionality has been deprecated.
     /// (https://openweathermap.org/current#builtin)
     #[allow(dead_code)]
-    name: String,
+    name: Option<String>,
 }
 
 #[derive(serde::Deserialize)]
@@ -34,16 +34,16 @@ pub struct Coord {
 
 #[derive(serde::Deserialize)]
 pub struct Weather {
-    pub id: u32,
+    pub id: Option<u32>,
     pub main: String,
     pub description: String,
-    pub icon: String,
+    pub icon: Option<String>,
 }
 
 #[derive(serde::Deserialize)]
 pub struct Main {
     pub temp: f64,
-    pub feels_like: f64,
+    pub feels_like: Option<f64>,
     pub pressure: u32,
     pub humidity: u32,
     pub temp_min: f64,
@@ -55,7 +55,7 @@ pub struct Main {
 #[derive(serde::Deserialize)]
 pub struct Wind {
     pub speed: f64,
-    pub deg: u32,
+    pub deg: Option<u32>,
     pub gust: Option<f64>,
 }
 
@@ -77,7 +77,7 @@ pub struct Snow {
 
 #[derive(serde::Deserialize)]
 pub struct Clouds {
-    pub all: u32,
+    pub all: Option<u32>,
 }
 
 #[derive(serde::Deserialize)]
@@ -86,7 +86,7 @@ pub struct Sys {
     pub type_: Option<u32>,
     pub id: Option<u32>,
     pub message: Option<String>,
-    pub country: String,
+    pub country: Option<String>,
     pub sunrise: u32,
     pub sunset: u32,
 }
