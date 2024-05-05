@@ -1,64 +1,84 @@
-use anyhow::{anyhow, Context, Result};
-
 use std::{
     env,
     fs::File,
     io::{Read, Write},
 };
 
+use anyhow::{anyhow, Context, Result};
+
 pub mod api_usage;
 pub mod cli;
 pub mod user_setup;
 
+mod program_info;
 #[cfg(test)]
 mod testing;
+mod types;
 
-/// Constants for program information.
-pub mod program_info {
-    /// Name of the program.
-    pub const PROGRAM_NAME: &str = "weather-cli";
-    /// Description of the program.
-    pub const PROGRAM_DESCRIPTION: &str = "Weather for command-line fans!";
-    /// Author name of the program.
-    pub const PROGRAM_AUTHORS: &str = "Stellar";
-    /// URL of the program on crates.io.
-    pub const CRATES_IO_URL: &str = "https://crates.io/crates/weather-cli";
-    /// URL of the program repository.
-    pub const REPOSITORY_URL: &str = "https://github.com/cosmostellar/weather-cli";
-}
-
-/// Constants for setting files.
-mod constants {
-    /// Name of the JSON file. It stores an API key.
+pub mod constants {
+    /// JSON file name for an API key.
     pub const API_JSON_NAME: &str = "api";
 
-    /// Name of the setting JSON file.
-    pub const SETTINGS_JSON_NAME: &str = "settings";
+    /// JSON file name for user setting.
+    pub const USER_SETTING_JSON_NAME: &str = "setting";
 
-    /// The URL template for the OpenWeatherMap API.
+    /// ## Current weather data
     ///
-    /// This template can be used to retrieve weather data by replacing following placeholders:
+    /// Access current weather data for any location on Earth!
+    /// We collect and process weather data from different sources such as
+    /// global and local weather models, satellites, radars and a vast network
+    /// of weather stations. Data is available in JSON, XML, or HTML format.
+    /// API Documentation: [https://openweathermap.org/api/current](https://openweathermap.org/api/current)
     ///
     /// - `{lat_value}`: Latitude value of the location.
     /// - `{lon_value}`: Longitude value of the location.
-    /// - `{api_key}`: Your OpenWeatherMap API key.
-    /// - `{unit}`: The desired measurement unit. (ex. `metric` or `imperial`)
+    /// - `{api_key}`: OpenWeatherMap API key.
+    /// - `{unit}`: The desired measurement unit.
+    ///   - ex. `standard`, `metric`, `imperial`
+    ///   - MORE INFO: [https://openweathermap.org/weather-data](https://openweathermap.org/weather-data)
     ///
-    /// ## Example Usage
-    ///
+    /// ### Example Usage
     /// ```
-    /// pub const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
+    /// # use weather_cli::constants::WEATHER_API_URL;
+    /// let url = WEATHER_API_URL
+    ///     .replace("{LAT_VALUE}", "37.3361663")
+    ///     .replace("{LON_VALUE}", "-121.890591")
+    ///     .replace("{API_KEY}", "EXAMPLE_KEY")
+    ///     .replace("{UNIT}", "imperial");
     ///
-    /// let url = API_URL
-    ///     .replace("{lat_value}", "37.3361663")
-    ///     .replace("{lon_value}", "-121.890591")
-    ///     .replace("{api_key}", "EXAMPLE_KEY")
-    ///     .replace("{unit}", "imperial");
+    /// assert_eq!(url, "https://api.openweathermap.org/data/2.5/weather?lat=37.3361663&lon=-121.890591&appid=EXAMPLE_KEY&units=imperial");
     /// ```
-    pub const API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={lat_value}&lon={lon_value}&appid={api_key}&units={unit}";
+    pub const WEATHER_API_URL: &str = "https://api.openweathermap.org/data/2.5/weather?lat={LAT_VALUE}&lon={LON_VALUE}&appid={API_KEY}&units={UNIT}";
+
+    /// ## Geocoding API
+    ///
+    /// Geocoding API is a simple tool that we have developed to ease
+    /// the search for locations while working with geographic names and coordinates.
+    /// API Documentation: [https://openweathermap.org/api/geocoding-api](https://openweathermap.org/api/geocoding-api)
+    ///
+    /// - `{lat_value}`: Latitude value of the location.
+    /// - `{lon_value}`: Longitude value of the location.
+    /// - `{api_key}`: OpenWeatherMap API key.
+    /// - `{unit}`: The desired measurement unit.
+    ///   - ex. `standard`, `metric`, `imperial`
+    ///   - MORE INFO: [https://openweathermap.org/weather-data](https://openweathermap.org/weather-data)
+    ///
+    /// ### Example Usage
+    /// ```
+    /// # use weather_cli::constants::WEATHER_API_URL;
+    /// let url = WEATHER_API_URL
+    ///     .replace("{LAT_VALUE}", "37.3361663")
+    ///     .replace("{LON_VALUE}", "-121.890591")
+    ///     .replace("{API_KEY}", "EXAMPLE_KEY")
+    ///     .replace("{UNIT}", "imperial");
+    ///
+    /// assert_eq!(url, "https://api.openweathermap.org/data/2.5/weather?lat=37.3361663&lon=-121.890591&appid=EXAMPLE_KEY&units=imperial");
+    /// ```
+    pub const GEOLOCATION_API_URL: &str =
+        "http://api.openweathermap.org/geo/1.0/direct?q={QUERY}&limit=10&appid={API_KEY}";
 }
 
-/// Returns the executable directory.
+/// Returns executable directory.
 pub fn get_executable_directory() -> Result<String> {
     let executable_path =
         env::current_exe().context("Failed to get the executable file directory!")?;
@@ -73,26 +93,47 @@ pub fn get_executable_directory() -> Result<String> {
     Err(anyhow!("Unable to get the executable directory."))
 }
 
-/// Edits or generates a setting file in the executable directory.
-pub fn get_json_file(name: &str) -> Result<File> {
+/// Returns `std::fs::File` type value of a JSON file.
+pub fn get_json_file(json_suffix: &str) -> Result<File> {
     let executable_dir = get_executable_directory()?;
 
-    let file = match File::open(format!("{}/weather-cli-{}.json", executable_dir, name)) {
+    let file = match File::open(format!(
+        "{}/{}",
+        executable_dir,
+        make_json_file_name(json_suffix)
+    )) {
         Ok(f) => f,
         Err(_) => {
-            let mut new_file =
-                File::create(format!("{}/weather-cli-{}.json", executable_dir, name))
-                    .context("Failed to create a json file.")?;
+            let mut new_file = File::create(format!(
+                "{}/{}",
+                executable_dir,
+                make_json_file_name(json_suffix)
+            ))
+            .context("Failed to create a json file.")?;
             new_file
                 .write_all("{}".as_bytes())
                 .context("Failed to create a json file.")?;
 
-            File::open(format!("{}/weather-cli-{}.json", executable_dir, name))
-                .context("Failed to get the json file.")?
+            File::open(format!(
+                "{}/{}",
+                executable_dir,
+                make_json_file_name(json_suffix)
+            ))
+            .context("Failed to get the json file.")?
         }
     };
 
     Ok(file)
+}
+
+/// Complete a JSON file name.
+/// ## Example
+/// ```
+/// # use weather_cli::make_json_file_name;
+/// assert_eq!(make_json_file_name("api"), "weather-cli-api.json");
+/// ```
+pub fn make_json_file_name(suffix: &str) -> String {
+    format!("weather-cli-{}.json", suffix)
 }
 
 pub enum ErrorMessageType {
@@ -104,7 +145,14 @@ pub enum ErrorMessageType {
 fn get_file_read_error_message(error_type: ErrorMessageType, context: Option<&str>) -> String {
     match (error_type, context) {
         (ErrorMessageType::SettingRead, Some(context)) => {
-            format!("Failed to read the following file: {}", context)
+            if context == "api" {
+                format!(
+                    "Failed to read {}. Please make sure to setup your API key.",
+                    make_json_file_name(context)
+                )
+            } else {
+                format!("Failed to read the following file: {}", context)
+            }
         }
         (ErrorMessageType::ApiResponseRead, Some(context)) => {
             format!("The given '{}' JSON input may be invalid.", context)
@@ -118,20 +166,18 @@ fn get_file_read_error_message(error_type: ErrorMessageType, context: Option<&st
 
 /// Read a JSON file and return the string.
 pub fn read_json_file<T: serde::de::DeserializeOwned>(json_name: &str) -> Result<T> {
-    use constants::API_JSON_NAME;
-
     let mut file = get_json_file(json_name)?;
     let mut json_string = String::new();
     file.read_to_string(&mut json_string)?;
 
     let api_key_data: T = serde_json::from_str(&json_string).context(
-        get_file_read_error_message(ErrorMessageType::SettingRead, Some(API_JSON_NAME)),
-    )?;
+        get_file_read_error_message(ErrorMessageType::SettingRead, Some(json_name)),
+    )?; // ERROR
 
     Ok(api_key_data)
 }
 
-/// Read a JSON file and return the string.
+/// Reads a JSON file and returns serialized data.
 pub fn read_json_response<T: serde::de::DeserializeOwned>(
     response: &str,
     error_message_type: ErrorMessageType,
@@ -157,4 +203,29 @@ pub fn read_json_response<T: serde::de::DeserializeOwned>(
     ))?;
 
     Ok(response_data)
+}
+
+/// URL placeholder information.
+///
+/// ## Example Usage
+/// ```no_run
+/// # use weather_cli::URLPlaceholder;
+/// URLPlaceholder {
+///     placeholder: "{LAT_VALUE}".to_string(),
+///     value: "37.3361663".to_string(),
+/// };
+/// ```
+pub struct URLPlaceholder {
+    pub placeholder: String,
+    pub value: String,
+}
+
+/// Replaces URL placeholders with given values.
+pub fn replace_url_placeholders(url: &str, url_placeholders: &[URLPlaceholder]) -> String {
+    let mut replaced_url = String::from(url);
+    for url_placeholder in url_placeholders {
+        replaced_url = replaced_url.replace(&url_placeholder.placeholder, &url_placeholder.value);
+    }
+
+    replaced_url
 }

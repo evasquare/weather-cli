@@ -1,12 +1,11 @@
 use clap::Parser;
 
 use crate::{
-    api_usage::{get_weather_information, search_city},
+    api_usage::{print_weather_information, search_city},
     get_executable_directory,
+    program_info::ABOUT,
     user_setup::setup_api,
 };
-
-const ABOUT: &str = "# weather-cli : Weather for command-line fans!";
 
 #[derive(clap::Parser)]
 #[command(author, version, about = ABOUT, long_about = None)]
@@ -27,7 +26,7 @@ enum Commands {
         query: String,
     },
 
-    /// Setup the OpenWeather API Key
+    /// Setup an OpenWeather API Key
     /// (https://openweathermap.org)
     SetupApi {
         /// API key from OpenWeather.
@@ -39,13 +38,12 @@ enum Commands {
     About {},
 }
 
-/// Initialize the command line interface.
 pub async fn init() {
     let cli = Cli::parse();
 
     match &cli.command {
         Some(Commands::Check {}) => {
-            match get_weather_information().await {
+            match print_weather_information().await {
                 Ok(()) => {}
                 Err(e) => {
                     println!("ERROR: {}", e);
@@ -81,7 +79,7 @@ pub async fn init() {
             println!("# {}", PROGRAM_NAME);
             println!("{}\n", PROGRAM_DESCRIPTION);
             println!("Developed by: {}", authors);
-            println!("- Crates.io: {}", CRATES_IO_URL);
+            println!("- crates.io: {}", CRATES_IO_URL);
             println!("- Github: {}", REPOSITORY_URL);
         }
         None => {

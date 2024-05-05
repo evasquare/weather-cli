@@ -1,48 +1,48 @@
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 
-use self::structs::UserSettings;
+use crate::{constants::API_JSON_NAME, make_json_file_name, types::user_settings::UserSetting};
 
-pub mod structs;
-
-/// Saves an API key into the API setting file.
-pub fn setup_api(key: String) -> Result<()> {
-    use crate::constants::API_JSON_NAME;
-    use crate::get_executable_directory;
-    use crate::user_setup::structs::ApiSetting;
-    use regex::Regex;
+/// Sets up an API key.
+pub fn setup_api(api_key_input: String) -> Result<()> {
     use std::{fs::File, io::Write};
+
+    use regex::Regex;
+
+    use crate::{get_executable_directory, types::user_settings::ApiSetting};
 
     let executable_dir = get_executable_directory()?;
     let regex = Regex::new(r"^[a-zA-Z0-9]+$")?;
 
-    // Api key validation.
-    if key.len() != 32 || !regex.is_match(&key) {
-        println!("Please enter a valid key!");
+    if api_key_input.len() != 32 || !regex.is_match(&api_key_input) {
+        return Err(anyhow!("Please enter a valid key!"));
     } else {
-        let new_api_setting = ApiSetting { key };
+        let new_api_setting = ApiSetting { key: api_key_input };
 
         let api_json_string = serde_json::to_string(&new_api_setting)?;
         File::create(format!(
-            "{}/weather-cli-{}.json",
-            executable_dir, API_JSON_NAME
+            "{}/{}",
+            executable_dir,
+            make_json_file_name(API_JSON_NAME)
         ))?
         .write_all(api_json_string.as_bytes())?;
-        println!("Successfully updated your key!");
+
+        println!("Successfully updated your key data!");
     }
 
     Ok(())
 }
 
-/// Updates the user setting file.
-pub fn update_user_settings(setting_args: &UserSettings) -> Result<()> {
-    use crate::constants::SETTINGS_JSON_NAME;
-    use crate::user_setup::structs::City;
-    use crate::{get_executable_directory, read_json_file};
-    use anyhow::Context;
-
+/// Update user setting.
+pub fn update_user_settings(setting_args: &UserSetting) -> Result<()> {
     use std::{fs::File, io::Write};
 
-    let mut json_data = read_json_file::<UserSettings>(SETTINGS_JSON_NAME)?;
+    use crate::{
+        constants::USER_SETTING_JSON_NAME,
+        types::user_settings::City,
+        {get_executable_directory, read_json_file},
+    };
+
+    let mut json_data = read_json_file::<UserSetting>(USER_SETTING_JSON_NAME)?; // ERROR
 
     // 1. City
     {
@@ -57,23 +57,23 @@ pub fn update_user_settings(setting_args: &UserSettings) -> Result<()> {
         }
         json_data.city = using_city;
     }
+
     // 2. Unit
-    if let Some(unit) = &setting_args.unit {
-        json_data.unit = Some(unit.clone());
-    }
+    json_data.units = setting_args.units.clone();
 
     let json_string = serde_json::to_string(&json_data)?;
 
     // Generate a new setting file.
     let executable_dir = get_executable_directory()?;
     File::create(format!(
-        "{}/weather-cli-{}.json",
-        executable_dir, SETTINGS_JSON_NAME
+        "{}/{}",
+        executable_dir,
+        make_json_file_name(USER_SETTING_JSON_NAME)
     ))?
     .write_all(json_string.as_bytes())
     .context(format!(
         "Failed to write a JSON file: {}",
-        SETTINGS_JSON_NAME
+        USER_SETTING_JSON_NAME
     ))?;
 
     Ok(())

@@ -1,9 +1,14 @@
 use core::fmt;
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
-pub struct UserSettings {
+pub struct ApiSetting {
+    pub key: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
+pub struct UserSetting {
     pub city: Option<City>,
-    pub unit: Option<Unit>,
+    pub units: Option<Units>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
@@ -13,6 +18,7 @@ pub struct City {
     pub lon: f64,
     pub country: String,
 }
+
 impl fmt::Display for City {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> fmt::Result {
         let output = format!(
@@ -24,21 +30,18 @@ impl fmt::Display for City {
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, PartialEq)]
-pub enum Unit {
+pub enum Units {
+    Standard,
     Metric,
     Imperial,
 }
-impl fmt::Display for Unit {
-    /// Returns the unit name.
+
+impl fmt::Display for Units {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> fmt::Result {
         f.write_str(match self {
-            Unit::Metric => "metric",
-            Unit::Imperial => "imperial",
+            Units::Standard => "standard",
+            Units::Metric => "metric",
+            Units::Imperial => "imperial",
         })
     }
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
-pub struct ApiSetting {
-    pub key: String,
 }
