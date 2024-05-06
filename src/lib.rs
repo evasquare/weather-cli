@@ -57,23 +57,17 @@ pub mod constants {
     /// the search for locations while working with geographic names and coordinates.
     /// API Documentation: [https://openweathermap.org/api/geocoding-api](https://openweathermap.org/api/geocoding-api)
     ///
-    /// - `{lat_value}`: Latitude value of the location.
-    /// - `{lon_value}`: Longitude value of the location.
-    /// - `{api_key}`: OpenWeatherMap API key.
-    /// - `{unit}`: The desired measurement unit.
-    ///   - ex. `standard`, `metric`, `imperial`
-    ///   - MORE INFO: [https://openweathermap.org/weather-data](https://openweathermap.org/weather-data)
+    /// - `{QUERY}`: City search query.
+    /// - `{API_KEY}`: OpenWeatherMap API key.
     ///
     /// ### Example Usage
     /// ```
-    /// # use weather_cli::constants::WEATHER_API_URL;
-    /// let url = WEATHER_API_URL
-    ///     .replace("{LAT_VALUE}", "37.3361663")
-    ///     .replace("{LON_VALUE}", "-121.890591")
-    ///     .replace("{API_KEY}", "EXAMPLE_KEY")
-    ///     .replace("{UNIT}", "imperial");
+    /// # use weather_cli::constants::GEOLOCATION_API_URL;
+    /// let url = GEOLOCATION_API_URL
+    ///     .replace("{QUERY}", "Toronto")
+    ///     .replace("{API_KEY}", "EXAMPLE_KEY");
     ///
-    /// assert_eq!(url, "https://api.openweathermap.org/data/2.5/weather?lat=37.3361663&lon=-121.890591&appid=EXAMPLE_KEY&units=imperial");
+    /// assert_eq!(url, "http://api.openweathermap.org/geo/1.0/direct?q=Toronto&limit=10&appid=EXAMPLE_KEY");
     /// ```
     pub const GEOLOCATION_API_URL: &str =
         "http://api.openweathermap.org/geo/1.0/direct?q={QUERY}&limit=10&appid={API_KEY}";
