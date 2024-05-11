@@ -59,7 +59,7 @@ pub fn update_user_settings(setting_args: &UserSetting) -> Result<()> {
     }
 
     // 2. Unit
-    json_data.units = setting_args.units.clone();
+    json_data.units.clone_from(&setting_args.units);
 
     let json_string = serde_json::to_string(&json_data)?;
 
