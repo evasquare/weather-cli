@@ -3,9 +3,9 @@ name = "weather-cli"
 description = "Minimalistic command-line weather program. It works with OpenWeather API."
 keywords = ["weather", "open-weather-api"]
 version = "0.4.0"
-authors = ["Stellar"]
+authors = ["Pixella"]
 license = "MIT"
-repository = "https://github.com/cosmostellar/weather-cli"
+repository = "https://github.com/pixelbracket/weather-cli"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
