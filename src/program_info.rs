@@ -7,8 +7,8 @@ pub const PROGRAM_DESCRIPTION: &str =
 pub const ABOUT: &str =
     "* weather-cli - Minimalistic command-line weather program. It works with OpenWeather API.";
 /// Author name of the program.
-pub const PROGRAM_AUTHORS: &str = "Pixella";
+pub const PROGRAM_AUTHORS: &str = "Eva";
 /// URL of the program on crates.io.
 pub const CRATES_IO_URL: &str = "https://crates.io/crates/weather-cli";
 /// URL of the program repository.
-pub const REPOSITORY_URL: &str = "https://github.com/pixelbracket/weather-cli";
+pub const REPOSITORY_URL: &str = "https://github.com/evasquare/weather-cli";
